@@ -261,6 +261,32 @@ export const adminService = {
       throw new Error(result.error || "Error al actualizar el restaurante.");
     }
     return result.restaurant;
+  },
+
+  // Clear all orders in database or for a specific restaurant
+  async clearOrders(restaurantId?: string) {
+    if (isMockMode()) {
+      if (restaurantId && restaurantId !== "ALL") {
+        const mockOrders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+        const remaining = mockOrders.filter((o: any) => o.restaurant_id !== restaurantId);
+        localStorage.setItem("mock_orders", JSON.stringify(remaining));
+      } else {
+        localStorage.removeItem("mock_orders");
+        localStorage.removeItem("mock_order_items");
+      }
+      return;
+    }
+
+    const url = restaurantId && restaurantId !== "ALL"
+      ? `/api/admin/orders?restaurantId=${restaurantId}`
+      : `/api/admin/orders`;
+
+    const res = await fetch(url, { method: "DELETE" });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "Error al eliminar pedidos.");
+    }
+    return result;
   }
 };
 

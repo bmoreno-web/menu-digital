@@ -220,6 +220,26 @@ export default function AdminRestaurantes() {
     }
   };
 
+  const [isClearingOrders, setIsClearingOrders] = useState(false);
+
+  const handleClearOrders = async () => {
+    const confirmClear = window.confirm(
+      "⚠️ ¿Deseas eliminar permanentemente TODOS los pedidos de prueba de la base de datos?\n\nEsta acción reiniciará el historial de ventas y pedidos a cero."
+    );
+    if (!confirmClear) return;
+
+    setIsClearingOrders(true);
+    try {
+      await adminService.clearOrders("ALL");
+      alert("¡Todos los pedidos han sido eliminados de la base de datos con éxito!");
+      await loadRestaurants();
+    } catch (err: any) {
+      alert(err?.message || "No se pudieron eliminar los pedidos.");
+    } finally {
+      setIsClearingOrders(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
@@ -270,6 +290,18 @@ export default function AdminRestaurantes() {
         </div>
         
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearOrders}
+            isLoading={isClearingOrders}
+            className="gap-1.5 font-bold text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300"
+            title="Vaciar todos los pedidos de prueba de la base de datos"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Vaciar Pedidos</span>
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
