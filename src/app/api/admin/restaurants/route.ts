@@ -12,6 +12,62 @@ const getAdminSupabase = () => {
   });
 };
 
+// GET: Fetch all restaurants (including inactive and pending approval)
+export async function GET() {
+  try {
+    const adminSupabase = getAdminSupabase();
+    if (!adminSupabase) {
+      return NextResponse.json({ error: "Missing Supabase credentials in server" }, { status: 500 });
+    }
+
+    const { data: restaurants, error } = await adminSupabase
+      .from("restaurants")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    if (!restaurants || restaurants.length === 0) {
+      return NextResponse.json({ success: true, restaurants: [] });
+    }
+
+    // Fetch all profiles to map owners
+    const ownerIds: string[] = Array.from(
+      new Set(restaurants.map((r: any) => r.owner_id).filter(Boolean))
+    );
+    const profilesMap: Record<string, any> = {};
+
+    if (ownerIds.length > 0) {
+      const { data: profiles } = await adminSupabase
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .in("id", ownerIds);
+
+      if (profiles) {
+        profiles.forEach((p: any) => {
+          profilesMap[p.id] = p;
+        });
+      }
+    }
+
+    const enrichedRestaurants = restaurants.map((r: any) => ({
+      ...r,
+      owner: profilesMap[r.owner_id] || {
+        full_name: r.name || "Usuario Restaurante",
+        email: r.phone ? `WA: ${r.phone}` : "contacto@menu-digital.com",
+      },
+    }));
+
+    return NextResponse.json({ success: true, restaurants: enrichedRestaurants });
+  } catch (err: any) {
+    console.error("API GET Admin Restaurants Error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Error al obtener restaurantes" },
+      { status: 400 }
+    );
+  }
+}
+
 // POST: Create restaurant with custom user and password
 export async function POST(req: NextRequest) {
   try {
@@ -73,7 +129,7 @@ export async function POST(req: NextRequest) {
       role: "RESTAURANT_OWNER",
     });
 
-    // 3. Create restaurant
+    // 3. Create restaurant (Admin-created restaurants are active immediately)
     const slug = slugify(name) || `restaurante-${Date.now()}`;
     const { data: restData, error: restError } = await adminSupabase
       .from("restaurants")
@@ -109,19 +165,23 @@ export async function POST(req: NextRequest) {
     }));
     await adminSupabase.from("menu_categories").insert(categoriesToInsert);
 
-    return NextResponse.json({ success: true, restaurant: restData });
+    return NextResponse.json({
+      success: true,
+      restaurant: { ...restData, owner: { full_name: ownerName, email: normalizedEmail } },
+    });
   } catch (err: any) {
     console.error("API Create Restaurant Error:", err);
     return NextResponse.json({ error: err?.message || "Error al crear restaurante" }, { status: 400 });
   }
 }
 
-// PUT: Update restaurant and optionally update owner password / credentials
+// PUT: Edit restaurant and reset credentials
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const {
       id,
+      ownerId,
       name,
       ownerName,
       email,
@@ -133,7 +193,6 @@ export async function PUT(req: NextRequest) {
       restaurantType,
       planTier,
       isActive,
-      ownerId,
     } = body;
 
     const adminSupabase = getAdminSupabase();
@@ -141,7 +200,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Missing Supabase credentials in server" }, { status: 500 });
     }
 
-    // 1. Update restaurant details
+    // 1. Update restaurant record
     const { data: updatedRest, error: restError } = await adminSupabase
       .from("restaurants")
       .update({
@@ -163,7 +222,11 @@ export async function PUT(req: NextRequest) {
 
     // 2. Update owner profile and auth credentials
     if (ownerId) {
-      const normalizedEmail = email ? (email.trim().includes("@") ? email.trim() : `${email.trim()}@menu-digital.com`) : undefined;
+      const normalizedEmail = email
+        ? email.trim().includes("@")
+          ? email.trim()
+          : `${email.trim()}@menu-digital.com`
+        : undefined;
 
       const profileUpdates: any = {
         full_name: ownerName,
@@ -191,6 +254,43 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true, restaurant: updatedRest });
   } catch (err: any) {
     console.error("API Update Restaurant Error:", err);
-    return NextResponse.json({ error: err?.message || "Error al actualizar restaurante" }, { status: 400 });
+    return NextResponse.json(
+      { error: err?.message || "Error al actualizar restaurante" },
+      { status: 400 }
+    );
+  }
+}
+
+// PATCH: Quick update of active status or plan tier
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, is_active, plan_tier } = body;
+
+    const adminSupabase = getAdminSupabase();
+    if (!adminSupabase) {
+      return NextResponse.json({ error: "Missing Supabase credentials in server" }, { status: 500 });
+    }
+
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (is_active !== undefined) updates.is_active = is_active;
+    if (plan_tier !== undefined) updates.plan_tier = plan_tier;
+
+    const { data: updated, error } = await adminSupabase
+      .from("restaurants")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, restaurant: updated });
+  } catch (err: any) {
+    console.error("API PATCH Restaurant Error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Error al actualizar estado" },
+      { status: 400 }
+    );
   }
 }

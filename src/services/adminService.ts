@@ -26,7 +26,18 @@ export const adminService = {
       });
     }
 
-    // Real Supabase Mode
+    // Real Supabase API Route (Bypasses RLS so pending and inactive restaurants are always visible)
+    try {
+      const res = await fetch("/api/admin/restaurants");
+      const result = await res.json();
+      if (res.ok && result.success && Array.isArray(result.restaurants)) {
+        return result.restaurants;
+      }
+    } catch (e) {
+      console.warn("Falling back to direct Supabase client for admin restaurants:", e);
+    }
+
+    // Fallback: Direct Supabase client
     const supabase = createClient();
     const { data: restaurants, error } = await supabase
       .from("restaurants")
@@ -79,15 +90,14 @@ export const adminService = {
       return;
     }
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("restaurants")
-      .update({ is_active: isActive, updated_at: new Date().toISOString() })
-      .eq("id", restaurantId);
-
-    if (error) {
-      console.error("Error toggling restaurant active state:", error);
-      throw error;
+    const res = await fetch("/api/admin/restaurants", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: restaurantId, is_active: isActive }),
+    });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "No se pudo cambiar el estado del restaurante.");
     }
   },
 
@@ -104,15 +114,14 @@ export const adminService = {
       return;
     }
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("restaurants")
-      .update({ plan_tier: planTier, updated_at: new Date().toISOString() })
-      .eq("id", restaurantId);
-
-    if (error) {
-      console.error("Error updating restaurant plan tier:", error);
-      throw error;
+    const res = await fetch("/api/admin/restaurants", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: restaurantId, plan_tier: planTier }),
+    });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "No se pudo actualizar el plan del restaurante.");
     }
   },
 
