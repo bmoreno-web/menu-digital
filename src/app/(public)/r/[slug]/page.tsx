@@ -10,6 +10,7 @@ import { useCart } from "@/hooks/useCart";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 import {
   UtensilsCrossed,
   MapPin,
@@ -192,7 +193,10 @@ export default function PublicRestaurantPage() {
       </div>
 
       {/* BODY CONTENT - MENU LIST */}
-      <div className="max-w-xl mx-auto px-4 mt-6 space-y-6">
+      <div className="max-w-xl mx-auto px-4 mt-4 space-y-4">
+        
+        {/* PWA INSTALL BANNER */}
+        <InstallPwaButton variant="banner" />
         
         {/* Trial Expired Alert */}
         {trialStatus && !trialStatus.active && (

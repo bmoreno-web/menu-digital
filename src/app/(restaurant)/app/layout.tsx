@@ -8,6 +8,7 @@ import { authService } from "@/services/authService";
 import { SITE_CONFIG } from "@/config/site";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { InstallPwaButton } from "@/components/InstallPwaButton";
 import {
   UtensilsCrossed,
   LayoutDashboard,
@@ -167,6 +168,11 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
               );
             })}
           </nav>
+
+          {/* PWA Install shortcut */}
+          <div className="px-4 pb-2">
+            <InstallPwaButton variant="button" label="📱 Añadir Icono al Celular" className="w-full justify-center bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-200" />
+          </div>
 
           {/* Logout controls */}
           <div className="p-4 border-t border-slate-100">
