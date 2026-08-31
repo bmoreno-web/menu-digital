@@ -8,10 +8,12 @@ const isMockMode = () => {
 
 export const restaurantService = {
   // 1. OBTENER PERFIL DEL RESTAURANTE
-  async getProfile(id: string): Promise<Restaurant> {
+  async getProfile(idOrSlug: string): Promise<Restaurant> {
     if (isMockMode()) {
       const mockRestaurants = JSON.parse(localStorage.getItem("mock_restaurants") || "[]");
-      const rest = mockRestaurants.find((r: any) => r.id === id || r.owner_id === id);
+      const rest = mockRestaurants.find(
+        (r: any) => r.id === idOrSlug || r.owner_id === idOrSlug || r.slug === idOrSlug
+      );
       if (!rest) throw new Error("Restaurante no encontrado.");
       return rest;
     }
@@ -19,7 +21,7 @@ export const restaurantService = {
     const { data, error } = await supabase
       .from("restaurants")
       .select("*")
-      .or(`id.eq.${id},owner_id.eq.${id}`)
+      .or(`id.eq.${idOrSlug},owner_id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
       .single();
 
     if (error) throw error;
