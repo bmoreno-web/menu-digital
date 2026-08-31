@@ -210,8 +210,21 @@ export default function DailyMenuPage() {
     setFeedback(null);
 
     try {
+      let targetRestaurantId = restaurant?.id;
+      if (!targetRestaurantId) {
+        const session = await authService.getSession();
+        if (session?.restaurant?.id) {
+          targetRestaurantId = session.restaurant.id;
+          setRestaurant(session.restaurant);
+        }
+      }
+
+      if (!targetRestaurantId) {
+        throw new Error("No se encontró el restaurante activo. Por favor selecciona un restaurante.");
+      }
+
       const saved = await restaurantService.saveMenu(
-        restaurant.id,
+        targetRestaurantId,
         menuDate,
         menuTitle,
         menuStatus,
@@ -221,10 +234,11 @@ export default function DailyMenuPage() {
       setMenuItems(validItems);
       setFeedback("¡Menú guardado y publicado con éxito!");
 
-      const history = await restaurantService.getMenusList(restaurant.id);
+      const history = await restaurantService.getMenusList(targetRestaurantId);
       setPastMenus(history);
-    } catch (err) {
-      setFeedback("No se pudo guardar el menú.");
+    } catch (err: any) {
+      console.error("Error saving menu:", err);
+      setFeedback(err?.message || "No se pudo guardar el menú.");
     } finally {
       setIsSaving(false);
     }

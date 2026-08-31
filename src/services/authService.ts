@@ -270,6 +270,31 @@ export const authService = {
       }
     }
 
+    // Owner check: match restaurants by owner_id
+    if (!restaurant) {
+      const { data: ownedRest } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("owner_id", session.user.id)
+        .maybeSingle();
+      if (ownedRest) {
+        restaurant = ownedRest;
+      }
+    }
+
+    // Super admin fallback: auto-assign the most recent restaurant
+    if (!restaurant && currentUser.role === "SUPER_ADMIN") {
+      const { data: anyRest } = await supabase
+        .from("restaurants")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (anyRest) {
+        restaurant = anyRest;
+      }
+    }
+
     return { user: currentUser, restaurant };
   }
 };
