@@ -306,8 +306,21 @@ BEGIN
   VALUES (
     new.id,
     new.email,
-    COALESCE(new.raw_user_meta_data->>'full_name', 'Usuario Restaurante'),
-    COALESCE((new.raw_user_meta_data->>'role')::user_role, 'RESTAURANT_OWNER')
+    COALESCE(
+      CASE 
+        WHEN new.raw_user_meta_data IS NOT NULL THEN new.raw_user_meta_data->>'full_name'
+        ELSE NULL
+      END, 
+      'Usuario Restaurante'
+    ),
+    COALESCE(
+      CASE 
+        WHEN new.raw_user_meta_data IS NOT NULL AND (new.raw_user_meta_data->>'role') IS NOT NULL 
+        THEN (new.raw_user_meta_data->>'role')::user_role
+        ELSE NULL
+      END, 
+      'RESTAURANT_OWNER'
+    )
   );
   RETURN new;
 END;

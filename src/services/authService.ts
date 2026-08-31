@@ -180,10 +180,29 @@ export const authService = {
 
   // 2. LOGIN
   async login(email: string, password?: string) {
+    const trimmedInput = email.trim();
+    const normalizedEmail = trimmedInput.includes("@")
+      ? trimmedInput
+      : (trimmedInput === "bmoreno" ? "bmoreno@menu-digital.com" : `${trimmedInput}@menu-digital.com`);
+
     if (isMockMode()) {
       await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Special check for super admin in mock mode
+      if ((trimmedInput === "bmoreno" || normalizedEmail === "bmoreno@menu-digital.com") && password === "Moremore2026") {
+        const superAdminUser = {
+          id: "super-admin-id",
+          email: "bmoreno@menu-digital.com",
+          full_name: "bmoreno",
+          role: "SUPER_ADMIN" as const,
+          created_at: new Date().toISOString(),
+        };
+        localStorage.setItem("mock_session", JSON.stringify({ user: superAdminUser, restaurant: null }));
+        return { user: superAdminUser, restaurant: null };
+      }
+
       const mockUsers = JSON.parse(localStorage.getItem("mock_users") || "[]");
-      const user = mockUsers.find((u: any) => u.email === email);
+      const user = mockUsers.find((u: any) => u.email === normalizedEmail || u.email === trimmedInput);
 
       if (!user) {
         throw new Error("Credenciales inválidas o correo no registrado.");
@@ -204,7 +223,7 @@ export const authService = {
 
     const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: normalizedEmail,
       password: password || "",
     });
 
@@ -217,13 +236,13 @@ export const authService = {
       .from("profiles")
       .select("*")
       .eq("id", data.user.id)
-      .single();
+      .maybeSingle();
 
     const { data: restaurantUser } = await supabase
       .from("restaurant_users")
       .select("restaurant_id")
       .eq("user_id", data.user.id)
-      .single();
+      .maybeSingle();
 
     let restaurant = null;
     if (restaurantUser) {
@@ -231,7 +250,7 @@ export const authService = {
         .from("restaurants")
         .select("*")
         .eq("id", restaurantUser.restaurant_id)
-        .single();
+        .maybeSingle();
       restaurant = restData;
     }
 
@@ -262,13 +281,13 @@ export const authService = {
       .from("profiles")
       .select("*")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
     const { data: restaurantUser } = await supabase
       .from("restaurant_users")
       .select("restaurant_id")
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     let restaurant = null;
     if (restaurantUser) {
@@ -276,7 +295,7 @@ export const authService = {
         .from("restaurants")
         .select("*")
         .eq("id", restaurantUser.restaurant_id)
-        .single();
+        .maybeSingle();
       restaurant = restData;
     }
 
