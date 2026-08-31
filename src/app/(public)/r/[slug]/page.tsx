@@ -261,21 +261,30 @@ export default function PublicRestaurantPage() {
                 >
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between items-start gap-4">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                            {item.category_name}
-                          </span>
-                          {!item.is_available && (
-                            <Badge variant="danger" size="sm">
-                              Agotado
-                            </Badge>
+                      <div className="flex items-start gap-3 min-w-0">
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover border border-slate-100 shrink-0 shadow-xs"
+                          />
+                        )}
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              {item.category_name}
+                            </span>
+                            {!item.is_available && (
+                              <Badge variant="danger" size="sm">
+                                Agotado
+                              </Badge>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-extrabold text-slate-950">{item.name}</h4>
+                          {item.description && (
+                            <p className="text-xs text-slate-500 leading-relaxed pt-0.5">{item.description}</p>
                           )}
                         </div>
-                        <h4 className="text-sm font-extrabold text-slate-950">{item.name}</h4>
-                        {item.description && (
-                          <p className="text-xs text-slate-500 leading-relaxed pt-0.5">{item.description}</p>
-                        )}
                       </div>
 
                       <div className="text-right shrink-0">
