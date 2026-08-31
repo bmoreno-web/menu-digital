@@ -61,7 +61,7 @@ export const authService = {
         allows_pickup: true,
         delivery_fee: 3000,
         is_active: true,
-        plan_tier: "pro",
+        plan_tier: "free",
         created_at: new Date().toISOString(),
       };
 
@@ -151,6 +151,7 @@ export const authService = {
         whatsapp: data.whatsapp,
         city: data.city,
         address: data.address,
+        plan_tier: "free",
       })
       .select()
       .single();

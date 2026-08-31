@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { restaurantService } from "@/services/restaurantService";
+import { subscriptionService } from "@/services/subscriptionService";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -34,6 +35,7 @@ export default function PublicRestaurantPage() {
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [trialStatus, setTrialStatus] = useState<any>(null);
 
   // Cart Management
   const { cart, addToCart, updateQuantity, getSubtotal } = useCart(slug);
@@ -47,6 +49,9 @@ export default function PublicRestaurantPage() {
 
         const activeMenu = await restaurantService.getActiveMenu(profile.id);
         setMenu(activeMenu);
+
+        const status = await subscriptionService.checkTrialStatus(profile.id);
+        setTrialStatus(status);
       } catch (err: any) {
         setError("El restaurante solicitado no existe o no se encuentra activo.");
       } finally {
@@ -189,6 +194,16 @@ export default function PublicRestaurantPage() {
       {/* BODY CONTENT - MENU LIST */}
       <div className="max-w-xl mx-auto px-4 mt-6 space-y-6">
         
+        {/* Trial Expired Alert */}
+        {trialStatus && !trialStatus.active && (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center space-y-1.5 shadow-sm">
+            <span className="text-xs font-black text-rose-800 uppercase tracking-widest block">Servicio Pausado</span>
+            <p className="text-xs text-rose-600 leading-relaxed font-semibold">
+              Este restaurante ha pausado temporalmente la recepción de pedidos en línea.
+            </p>
+          </div>
+        )}
+
         {/* Menu Date title */}
         {menu ? (
           <div className="flex items-center justify-between">
@@ -271,7 +286,7 @@ export default function PublicRestaurantPage() {
                     </div>
 
                     {/* Add to cart action (Section 17) */}
-                    {item.is_available && (
+                    {item.is_available && (!trialStatus || trialStatus.active) && (
                       <div className="flex justify-end pt-1">
                         <Button
                           type="button"

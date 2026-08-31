@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   delivery_fee NUMERIC(10,2) NOT NULL DEFAULT 3000.00,
   currency TEXT NOT NULL DEFAULT 'COP',
   is_active BOOLEAN NOT NULL DEFAULT true,
-  plan_tier TEXT NOT NULL DEFAULT 'pro',
+  plan_tier TEXT NOT NULL DEFAULT 'free',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

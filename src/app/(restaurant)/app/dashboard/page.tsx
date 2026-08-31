@@ -5,6 +5,7 @@ import Link from "next/link";
 import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
 import { orderService } from "@/services/orderService";
+import { subscriptionService } from "@/services/subscriptionService";
 import { SITE_CONFIG } from "@/config/site";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -30,6 +31,8 @@ export default function RestaurantDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [trialStatus, setTrialStatus] = useState<any>(null);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   async function loadDashboardData() {
     try {
@@ -41,6 +44,9 @@ export default function RestaurantDashboard() {
 
         const ordersList = await orderService.getOrders(session.restaurant.id);
         setOrders(ordersList);
+
+        const status = await subscriptionService.checkTrialStatus(session.restaurant.id);
+        setTrialStatus(status);
       }
     } catch (err) {
       console.error("Error al cargar datos del dashboard:", err);
@@ -61,6 +67,24 @@ export default function RestaurantDashboard() {
   const handleRefresh = () => {
     setIsRefreshing(true);
     loadDashboardData();
+  };
+
+  const handleUpgrade = async () => {
+    if (!restaurant) return;
+    setIsUpgrading(true);
+    try {
+      await restaurantService.updateRestaurant(restaurant.id, { plan_tier: "pro" });
+      const session = await authService.getSession();
+      if (session) {
+        setRestaurant(session.restaurant);
+      }
+      await loadDashboardData();
+      alert("¡Suscripción actualizada a Plan Pro con éxito! La recepción de pedidos se encuentra activa.");
+    } catch (err) {
+      alert("Error al actualizar la suscripción.");
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const handleUpdateStatus = async (orderId: string, status: any) => {
@@ -111,6 +135,61 @@ export default function RestaurantDashboard() {
 
   return (
     <div className="space-y-6">
+
+      {/* Trial Plan Warning Banner */}
+      {trialStatus && trialStatus.planTier === "free" && (
+        trialStatus.active ? (
+          <div className="bg-gradient-to-r from-brand-500/10 to-emerald-500/10 border border-brand-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-brand-600 text-white shrink-0">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Periodo de Prueba Activo</h4>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Te quedan <strong className="text-brand-700">{trialStatus.daysLeft} días</strong> de prueba y <strong className="text-brand-700">{trialStatus.ordersLeft} pedidos</strong> restantes. Actualiza a Pro para pedidos ilimitados.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              className="text-xs font-bold gap-1.5 shrink-0 h-9 px-4 rounded-xl"
+              onClick={handleUpgrade}
+              isLoading={isUpgrading}
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span>Actualizar a Plan Pro</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-600 text-white shrink-0 animate-pulse">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="text-xs font-black text-rose-950 uppercase tracking-wide">¡Prueba Gratis Expirada!</h4>
+                <p className="text-xs text-rose-700 mt-0.5">
+                  {trialStatus.reason === "TRIAL_EXPIRED" 
+                    ? "Tu prueba gratuita de 7 días ha finalizado." 
+                    : "Has alcanzado el límite de 30 pedidos de prueba."} Tu restaurante ya no puede recibir nuevos pedidos en línea. Actualiza a Pro para reactivar el servicio.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white border-transparent gap-1.5 shrink-0 h-9 px-4 rounded-xl"
+              onClick={handleUpgrade}
+              isLoading={isUpgrading}
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span>Activar Plan Pro</span>
+            </Button>
+          </div>
+        )
+      )}
       
       {/* HEADER WITH REFRESH */}
       <div className="flex items-center justify-between">

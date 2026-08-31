@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { restaurantService } from "@/services/restaurantService";
 import { orderService } from "@/services/orderService";
+import { subscriptionService } from "@/services/subscriptionService";
 import { formatCurrency } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -32,6 +33,7 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trialStatus, setTrialStatus] = useState<any>(null);
 
   // Cart
   const { cart, getSubtotal, clearCart } = useCart(slug);
@@ -51,6 +53,12 @@ export default function CheckoutPage() {
       try {
         const profile = await restaurantService.getProfile(slug);
         setRestaurant(profile);
+
+        const status = await subscriptionService.checkTrialStatus(profile.id);
+        setTrialStatus(status);
+        if (status && !status.active) {
+          setError("La recepción de pedidos en línea está temporalmente pausada.");
+        }
 
         // Adjust default delivery type based on restaurant capabilities
         if (!profile.allows_delivery && profile.allows_pickup) {
@@ -89,6 +97,12 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0 || !restaurant) return;
+    
+    if (trialStatus && !trialStatus.active) {
+      setError("La recepción de pedidos está temporalmente desactivada para este restaurante.");
+      return;
+    }
+
     if (formData.deliveryType === "DOMICILIO" && !formData.deliveryAddress.trim()) {
       setError("Por favor ingresa una dirección de entrega.");
       return;
@@ -332,6 +346,7 @@ export default function CheckoutPage() {
                 variant="primary"
                 className="w-full text-base font-bold h-12"
                 isLoading={isSubmitting}
+                disabled={!!(trialStatus && !trialStatus.active)}
               >
                 Enviar Pedido <CheckCircle2 className="ml-2 h-5 w-5" />
               </Button>

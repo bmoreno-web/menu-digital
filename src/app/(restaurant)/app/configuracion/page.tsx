@@ -21,8 +21,10 @@ import {
   ShieldCheck,
   CheckCircle2,
   Loader2,
+  TrendingUp,
 } from "lucide-react";
 import QRCode from "qrcode";
+import { subscriptionService } from "@/services/subscriptionService";
 
 export default function RestaurantConfiguration() {
   const [restaurant, setRestaurant] = useState<any>(null);
@@ -30,36 +32,56 @@ export default function RestaurantConfiguration() {
   const [isSaving, setIsSaving] = useState(false);
   const [qrUrl, setQrUrl] = useState<string>("");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [trialStatus, setTrialStatus] = useState<any>(null);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   const printAreaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const session = await authService.getSession();
-        if (session) {
-          setRestaurant(session.restaurant);
-          
-          // Generate Permanent QR Code
-          const publicUrl = `${window.location.origin}/r/${session.restaurant.slug}`;
-          const qrDataUrl = await QRCode.toDataURL(publicUrl, {
-            width: 500,
-            margin: 2,
-            color: {
-              dark: "#064e3b", // Deep forest brand color
-              light: "#ffffff",
-            },
-          });
-          setQrUrl(qrDataUrl);
-        }
-      } catch (err) {
-        console.error("Error al cargar configuraciones:", err);
-      } finally {
-        setIsLoading(false);
+  async function loadData() {
+    try {
+      const session = await authService.getSession();
+      if (session) {
+        setRestaurant(session.restaurant);
+        
+        const status = await subscriptionService.checkTrialStatus(session.restaurant.id);
+        setTrialStatus(status);
+        
+        // Generate Permanent QR Code
+        const publicUrl = `${window.location.origin}/r/${session.restaurant.slug}`;
+        const qrDataUrl = await QRCode.toDataURL(publicUrl, {
+          width: 500,
+          margin: 2,
+          color: {
+            dark: "#064e3b", // Deep forest brand color
+            light: "#ffffff",
+          },
+        });
+        setQrUrl(qrDataUrl);
       }
+    } catch (err) {
+      console.error("Error al cargar configuraciones:", err);
+    } finally {
+      setIsLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleUpgrade = async () => {
+    if (!restaurant) return;
+    setIsUpgrading(true);
+    try {
+      await restaurantService.updateRestaurant(restaurant.id, { plan_tier: "pro" });
+      await loadData();
+      setFeedback("¡Suscripción actualizada a Plan Pro con éxito! El servicio de pedidos se encuentra activo.");
+    } catch (err) {
+      setFeedback("Error al actualizar la suscripción.");
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as any;
@@ -378,6 +400,60 @@ export default function RestaurantConfiguration() {
                 </Button>
               </div>
 
+            </CardContent>
+          </Card>
+
+          {/* PLAN AND BILLING CARD */}
+          <Card className="border-slate-200 shadow-sm text-left">
+            <CardHeader>
+              <CardTitle className="text-sm uppercase tracking-wider text-slate-900">Plan y Suscripción</CardTitle>
+              <CardDescription>Administra y visualiza el estado de tu cuenta.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plan Actual:</span>
+                <span className={`text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                  restaurant.plan_tier === "pro" 
+                    ? "bg-emerald-100 text-emerald-800" 
+                    : restaurant.plan_tier === "enterprise"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-slate-100 text-slate-700"
+                }`}>
+                  {restaurant.plan_tier === "pro" ? "Pro Restaurante" : restaurant.plan_tier === "enterprise" ? "Enterprise" : "Prueba Gratis (Free)"}
+                </span>
+              </div>
+
+              {restaurant.plan_tier === "free" && trialStatus && (
+                <div className="space-y-3">
+                  <div className="text-xs text-slate-600 leading-relaxed">
+                    {trialStatus.active ? (
+                      <div>
+                        Te quedan <strong className="text-slate-900">{trialStatus.daysLeft} días</strong> de prueba y <strong className="text-slate-900">{trialStatus.ordersLeft} de {trialStatus.maxOrders} pedidos</strong> totales.
+                      </div>
+                    ) : (
+                      <div className="text-rose-600 font-bold">
+                        ⚠️ Tu prueba gratuita ha finalizado por {trialStatus.reason === "TRIAL_EXPIRED" ? "tiempo (7 días)" : "límite de pedidos (30)"}. La recepción de pedidos está suspendida.
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={handleUpgrade}
+                    isLoading={isUpgrading}
+                    variant="primary"
+                    className="w-full text-xs font-bold h-10 gap-1.5"
+                  >
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Actualizar a Plan Pro</span>
+                  </Button>
+                </div>
+              )}
+
+              {restaurant.plan_tier === "pro" && (
+                <div className="flex items-start gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <span>Tu cuenta cuenta con Plan Pro Activo. Disfrutas de pedidos ilimitados y todas las herramientas de control.</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
