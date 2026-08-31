@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { Restaurant, Menu, MenuItem, MenuCategory } from "@/types";
+import { SITE_CONFIG } from "@/config/site";
 
 const isMockMode = () => false;
 
