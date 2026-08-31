@@ -137,11 +137,12 @@ export const adminService = {
     }
   },
 
-  // Create restaurant directly from Super Admin
+  // Create restaurant directly from Super Admin (creates auth user + password + restaurant)
   async createRestaurant(data: {
     name: string;
     ownerName: string;
-    ownerEmail: string;
+    email: string;
+    password?: string;
     phone?: string;
     whatsapp: string;
     city: string;
@@ -149,9 +150,8 @@ export const adminService = {
     restaurantType: string;
     planTier: string;
   }) {
-    const slug = slugify(data.name) || `restaurante-${Date.now()}`;
-
     if (isMockMode()) {
+      const slug = slugify(data.name) || `restaurante-${Date.now()}`;
       const mockRestaurants = JSON.parse(localStorage.getItem("mock_restaurants") || "[]");
       const mockUsers = JSON.parse(localStorage.getItem("mock_users") || "[]");
       const userId = crypto.randomUUID();
@@ -159,8 +159,9 @@ export const adminService = {
 
       const newOwner = {
         id: userId,
-        email: data.ownerEmail,
+        email: data.email,
         full_name: data.ownerName,
+        password: data.password || "Moremore2026",
         role: "RESTAURANT_OWNER",
         created_at: new Date().toISOString(),
       };
@@ -186,47 +187,80 @@ export const adminService = {
       return newRestaurant;
     }
 
-    const supabase = createClient();
+    const res = await fetch("/api/admin/restaurants", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-    // Get current super admin session to set as initial owner or link
-    const { data: { session } } = await supabase.auth.getSession();
-    const ownerId = session?.user?.id;
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "Error al crear el restaurante.");
+    }
+    return result.restaurant;
+  },
 
-    if (!ownerId) {
-      throw new Error("No hay sesión activa de administrador.");
+  // Update restaurant and optionally update owner password / credentials
+  async updateRestaurant(data: {
+    id: string;
+    ownerId?: string;
+    name: string;
+    ownerName: string;
+    email: string;
+    password?: string;
+    phone?: string;
+    whatsapp: string;
+    city: string;
+    address: string;
+    restaurantType: string;
+    planTier: string;
+    isActive: boolean;
+  }) {
+    if (isMockMode()) {
+      const mockRestaurants = JSON.parse(localStorage.getItem("mock_restaurants") || "[]");
+      const mockUsers = JSON.parse(localStorage.getItem("mock_users") || "[]");
+
+      const restIdx = mockRestaurants.findIndex((r: any) => r.id === data.id);
+      if (restIdx !== -1) {
+        mockRestaurants[restIdx] = {
+          ...mockRestaurants[restIdx],
+          name: data.name,
+          restaurant_type: data.restaurantType,
+          phone: data.phone || data.whatsapp,
+          whatsapp: data.whatsapp,
+          city: data.city,
+          address: data.address,
+          plan_tier: data.planTier,
+          is_active: data.isActive,
+          updated_at: new Date().toISOString(),
+        };
+        localStorage.setItem("mock_restaurants", JSON.stringify(mockRestaurants));
+      }
+
+      if (data.ownerId) {
+        const userIdx = mockUsers.findIndex((u: any) => u.id === data.ownerId);
+        if (userIdx !== -1) {
+          mockUsers[userIdx].full_name = data.ownerName;
+          mockUsers[userIdx].email = data.email;
+          if (data.password) mockUsers[userIdx].password = data.password;
+          localStorage.setItem("mock_users", JSON.stringify(mockUsers));
+        }
+      }
+
+      return mockRestaurants[restIdx];
     }
 
-    // Insert restaurant
-    const { data: restaurantData, error: restaurantError } = await supabase
-      .from("restaurants")
-      .insert({
-        name: data.name,
-        slug: slug,
-        owner_id: ownerId,
-        restaurant_type: data.restaurantType,
-        phone: data.phone || data.whatsapp,
-        whatsapp: data.whatsapp,
-        city: data.city,
-        address: data.address,
-        plan_tier: data.planTier || "free",
-        is_active: true,
-      })
-      .select()
-      .single();
+    const res = await fetch("/api/admin/restaurants", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-    if (restaurantError || !restaurantData) {
-      throw new Error(restaurantError?.message || "Error al crear el restaurante.");
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "Error al actualizar el restaurante.");
     }
-
-    // Create default categories
-    const categoriesToInsert = SITE_CONFIG.defaultCategories.map((name, idx) => ({
-      restaurant_id: restaurantData.id,
-      name,
-      display_order: idx,
-    }));
-    await supabase.from("menu_categories").insert(categoriesToInsert);
-
-    return restaurantData;
+    return result.restaurant;
   }
 };
 

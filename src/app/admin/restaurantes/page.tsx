@@ -21,7 +21,10 @@ import {
   Plus,
   Trash2,
   LogIn,
-  AlertTriangle,
+  Edit2,
+  Lock,
+  Mail,
+  User,
 } from "lucide-react";
 
 export default function AdminRestaurantes() {
@@ -43,12 +46,33 @@ export default function AdminRestaurantes() {
   const [newRestaurantForm, setNewRestaurantForm] = useState({
     name: "",
     ownerName: "",
-    ownerEmail: "",
+    email: "",
+    password: "",
     whatsapp: "",
+    phone: "",
     city: "Barranquilla",
     address: "",
     restaurantType: "Corrientazo / Almuerzo Casero",
     planTier: "free",
+  });
+
+  // Modal State for Edit Restaurant
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editRestaurantForm, setEditRestaurantForm] = useState({
+    id: "",
+    ownerId: "",
+    name: "",
+    ownerName: "",
+    email: "",
+    password: "",
+    whatsapp: "",
+    phone: "",
+    city: "Barranquilla",
+    address: "",
+    restaurantType: "Corrientazo / Almuerzo Casero",
+    planTier: "free",
+    isActive: true,
   });
 
   const handleManageRestaurant = (res: any) => {
@@ -125,6 +149,25 @@ export default function AdminRestaurantes() {
     }
   };
 
+  const openEditModal = (res: any) => {
+    setEditRestaurantForm({
+      id: res.id,
+      ownerId: res.owner_id || "",
+      name: res.name || "",
+      ownerName: res.owner?.full_name || "",
+      email: res.owner?.email || "",
+      password: "",
+      whatsapp: res.whatsapp || "",
+      phone: res.phone || "",
+      city: res.city || "Barranquilla",
+      address: res.address || "",
+      restaurantType: res.restaurant_type || "Corrientazo / Almuerzo Casero",
+      planTier: res.plan_tier || "free",
+      isActive: res.is_active !== undefined ? res.is_active : true,
+    });
+    setIsEditModalOpen(true);
+  };
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRestaurantForm.name.trim() || !newRestaurantForm.whatsapp.trim()) {
@@ -140,8 +183,10 @@ export default function AdminRestaurantes() {
       setNewRestaurantForm({
         name: "",
         ownerName: "",
-        ownerEmail: "",
+        email: "",
+        password: "",
         whatsapp: "",
+        phone: "",
         city: "Barranquilla",
         address: "",
         restaurantType: "Corrientazo / Almuerzo Casero",
@@ -152,6 +197,26 @@ export default function AdminRestaurantes() {
       alert(err?.message || "Error al crear el restaurante.");
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editRestaurantForm.name.trim() || !editRestaurantForm.whatsapp.trim()) {
+      alert("Por favor ingresa el nombre y el WhatsApp del restaurante.");
+      return;
+    }
+
+    setIsEditing(true);
+    try {
+      await adminService.updateRestaurant(editRestaurantForm);
+      alert(`¡Restaurante "${editRestaurantForm.name}" actualizado con éxito!`);
+      setIsEditModalOpen(false);
+      await loadRestaurants();
+    } catch (err: any) {
+      alert(err?.message || "Error al actualizar el restaurante.");
+    } finally {
+      setIsEditing(false);
     }
   };
 
@@ -362,7 +427,7 @@ export default function AdminRestaurantes() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-400">
                   <th className="p-4 pl-6">Restaurante / Slug</th>
-                  <th className="p-4">Propietario / Contacto</th>
+                  <th className="p-4">Propietario / Acceso</th>
                   <th className="p-4">Creado el</th>
                   <th className="p-4 text-center">Estado de Operación</th>
                   <th className="p-4 text-center">Plan Asignado</th>
@@ -391,7 +456,7 @@ export default function AdminRestaurantes() {
                       <span className="text-xs font-bold text-slate-700 block leading-tight">
                         {res.owner?.full_name || "Desconocido"}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium block leading-none">
+                      <span className="text-[10px] text-brand-600 font-bold block leading-none">
                         {res.owner?.email || "sin-correo@sistema.com"}
                       </span>
                       {res.whatsapp && (
@@ -453,15 +518,23 @@ export default function AdminRestaurantes() {
                       </select>
                     </td>
 
-                    {/* Actions: Manage, View Link & Delete */}
-                    <td className="p-4 pr-6 text-right space-x-2">
+                    {/* Actions: Manage, Edit, View Link & Delete */}
+                    <td className="p-4 pr-6 text-right space-x-1.5">
                       <button
                         onClick={() => handleManageRestaurant(res)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors text-xs font-black shadow-sm"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors text-xs font-black shadow-xs"
                         title="Entrar al Dashboard de este restaurante como Super Admin"
                       >
                         <LogIn className="h-3.5 w-3.5" />
                         <span>Gestionar</span>
+                      </button>
+
+                      <button
+                        onClick={() => openEditModal(res)}
+                        className="inline-flex items-center justify-center p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                        title="Editar Datos y Contraseña del Restaurante"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
                       </button>
 
                       <a
@@ -470,7 +543,7 @@ export default function AdminRestaurantes() {
                         className="inline-flex items-center justify-center p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
                         title="Ver Menú Público"
                       >
-                        <ExternalLink className="h-4 w-4" />
+                        <ExternalLink className="h-3.5 w-3.5" />
                       </a>
 
                       <button
@@ -479,7 +552,7 @@ export default function AdminRestaurantes() {
                         className="inline-flex items-center justify-center p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                         title="Eliminar Restaurante"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>
 
@@ -496,14 +569,14 @@ export default function AdminRestaurantes() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Crear Nuevo Restaurante"
-        description="Agrega un restaurante directamente a la plataforma desde la consola de Super Admin."
+        description="Agrega un restaurante y configura sus credenciales de acceso directamente."
         maxWidth="lg"
       >
         <form onSubmit={handleCreateSubmit} className="space-y-4 text-left">
           <Input
             label="Nombre del Restaurante"
             required
-            placeholder="Ej: Corrientazo Don Juan"
+            placeholder="Ej: Restaurante El Buen Sabor"
             value={newRestaurantForm.name}
             onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, name: e.target.value })}
           />
@@ -515,6 +588,27 @@ export default function AdminRestaurantes() {
               placeholder="Ej: Juan Pérez"
               value={newRestaurantForm.ownerName}
               onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, ownerName: e.target.value })}
+              leftIcon={<User className="h-4 w-4" />}
+            />
+
+            <Input
+              label="Correo / Usuario de Acceso"
+              required
+              placeholder="Ej: buensabor@menu-digital.com"
+              value={newRestaurantForm.email}
+              onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, email: e.target.value })}
+              leftIcon={<Mail className="h-4 w-4" />}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Contraseña de Acceso (Opcional)"
+              type="text"
+              placeholder="Por defecto: Moremore2026"
+              value={newRestaurantForm.password}
+              onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, password: e.target.value })}
+              leftIcon={<Lock className="h-4 w-4" />}
             />
 
             <Input
@@ -592,6 +686,142 @@ export default function AdminRestaurantes() {
               className="font-bold"
             >
               Guardar Restaurante
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* EDIT RESTAURANT MODAL */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title={`Editar Restaurante: ${editRestaurantForm.name}`}
+        description="Modifica la información, plan y credenciales de acceso (usuario y contraseña)."
+        maxWidth="lg"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4 text-left">
+          <Input
+            label="Nombre del Restaurante"
+            required
+            value={editRestaurantForm.name}
+            onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, name: e.target.value })}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Nombre del Propietario / Contacto"
+              required
+              value={editRestaurantForm.ownerName}
+              onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, ownerName: e.target.value })}
+              leftIcon={<User className="h-4 w-4" />}
+            />
+
+            <Input
+              label="Correo / Usuario de Acceso"
+              required
+              value={editRestaurantForm.email}
+              onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, email: e.target.value })}
+              leftIcon={<Mail className="h-4 w-4" />}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Nueva Contraseña (Opcional)"
+              type="text"
+              placeholder="Dejar vacío para no cambiarla"
+              value={editRestaurantForm.password}
+              onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, password: e.target.value })}
+              leftIcon={<Lock className="h-4 w-4" />}
+            />
+
+            <Input
+              label="WhatsApp para Pedidos"
+              required
+              value={editRestaurantForm.whatsapp}
+              onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, whatsapp: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Ciudad"
+              required
+              value={editRestaurantForm.city}
+              onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, city: e.target.value })}
+            />
+
+            <Input
+              label="Dirección"
+              required
+              value={editRestaurantForm.address}
+              onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, address: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Tipo de Restaurante
+              </label>
+              <select
+                value={editRestaurantForm.restaurantType}
+                onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, restaurantType: e.target.value })}
+                className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600"
+              >
+                {SITE_CONFIG.restaurantTypes.map((t) => (
+                  <option key={t.id} value={t.label}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Plan Asignado
+              </label>
+              <select
+                value={editRestaurantForm.planTier}
+                onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, planTier: e.target.value })}
+                className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600"
+              >
+                <option value="free">Prueba / Free</option>
+                <option value="pro">Pro Restaurante</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Estado de Operación
+              </label>
+              <select
+                value={editRestaurantForm.isActive ? "ACTIVE" : "INACTIVE"}
+                onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, isActive: e.target.value === "ACTIVE" })}
+                className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600"
+              >
+                <option value="ACTIVE">Activo en Línea</option>
+                <option value="INACTIVE">Pausado / Desactivado</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isEditing}
+              className="font-bold"
+            >
+              Guardar Cambios
             </Button>
           </div>
         </form>
