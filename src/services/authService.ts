@@ -259,6 +259,9 @@ export const authService = {
 
   // 3. LOGOUT
   async logout() {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("admin_active_restaurant");
+    }
     if (isMockMode()) {
       localStorage.removeItem("mock_session");
       return;
@@ -271,8 +274,19 @@ export const authService = {
   async getSession() {
     if (isMockMode()) {
       const session = localStorage.getItem("mock_session");
-      return session ? JSON.parse(session) : null;
+      if (!session) return null;
+      const parsed = JSON.parse(session);
+      if (parsed.user?.role === "SUPER_ADMIN" && typeof window !== "undefined") {
+        const override = localStorage.getItem("admin_active_restaurant");
+        if (override) {
+          try {
+            parsed.restaurant = JSON.parse(override);
+          } catch {}
+        }
+      }
+      return parsed;
     }
+
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return null;
@@ -283,22 +297,37 @@ export const authService = {
       .eq("id", session.user.id)
       .maybeSingle();
 
-    const { data: restaurantUser } = await supabase
-      .from("restaurant_users")
-      .select("restaurant_id")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
+    const currentUser = profile || session.user;
     let restaurant = null;
-    if (restaurantUser) {
-      const { data: restData } = await supabase
-        .from("restaurants")
-        .select("*")
-        .eq("id", restaurantUser.restaurant_id)
-        .maybeSingle();
-      restaurant = restData;
+
+    // If super admin has selected a specific restaurant to manage, override it
+    if (currentUser.role === "SUPER_ADMIN" && typeof window !== "undefined") {
+      const override = localStorage.getItem("admin_active_restaurant");
+      if (override) {
+        try {
+          restaurant = JSON.parse(override);
+        } catch {}
+      }
     }
 
-    return { user: profile || session.user, restaurant };
+    // Normal flow: fetch restaurant from user mapping if not already resolved
+    if (!restaurant) {
+      const { data: restaurantUser } = await supabase
+        .from("restaurant_users")
+        .select("restaurant_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (restaurantUser) {
+        const { data: restData } = await supabase
+          .from("restaurants")
+          .select("*")
+          .eq("id", restaurantUser.restaurant_id)
+          .maybeSingle();
+        restaurant = restData;
+      }
+    }
+
+    return { user: currentUser, restaurant };
   }
 };

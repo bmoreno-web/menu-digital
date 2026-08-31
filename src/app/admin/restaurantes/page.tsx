@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { adminService } from "@/services/adminService";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -19,10 +20,12 @@ import {
   RefreshCw,
   Plus,
   Trash2,
+  LogIn,
   AlertTriangle,
 } from "lucide-react";
 
 export default function AdminRestaurantes() {
+  const router = useRouter();
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -38,6 +41,20 @@ export default function AdminRestaurantes() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newRestaurantForm, setNewRestaurantForm] = useState({
+    name: "",
+    ownerName: "",
+    ownerEmail: "",
+    whatsapp: "",
+    city: "Barranquilla",
+    address: "",
+    restaurantType: "Corrientazo / Almuerzo Casero",
+    planTier: "free",
+  });
+
+  const handleManageRestaurant = (res: any) => {
+    localStorage.setItem("admin_active_restaurant", JSON.stringify(res));
+    router.push("/app/dashboard");
+  };
     name: "",
     ownerName: "",
     ownerEmail: "",
@@ -445,8 +462,17 @@ export default function AdminRestaurantes() {
                       </select>
                     </td>
 
-                    {/* Actions: View Link & Delete */}
+                    {/* Actions: Manage, View Link & Delete */}
                     <td className="p-4 pr-6 text-right space-x-2">
+                      <button
+                        onClick={() => handleManageRestaurant(res)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 transition-colors text-xs font-black shadow-sm"
+                        title="Entrar al Dashboard de este restaurante como Super Admin"
+                      >
+                        <LogIn className="h-3.5 w-3.5" />
+                        <span>Gestionar</span>
+                      </button>
+
                       <a
                         href={`/r/${res.slug}`}
                         target="_blank"

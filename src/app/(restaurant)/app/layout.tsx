@@ -25,6 +25,7 @@ import {
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
   const [restaurant, setRestaurant] = useState<any>(null);
   const [notificationCount, setNotificationCount] = useState(0);
 
@@ -32,6 +33,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
     async function loadData() {
       const session = await authService.getSession();
       if (session) {
+        setUser(session.user);
         setRestaurant(session.restaurant);
       }
     }
@@ -58,6 +60,26 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
   return (
     <AuthGuard>
+      {/* SUPER ADMIN ACTIVE BANNER */}
+      {user?.role === "SUPER_ADMIN" && (
+        <div className="bg-amber-400 text-slate-950 px-4 py-2 text-xs font-black flex flex-wrap items-center justify-between shadow-sm border-b border-amber-500/40 z-40 sticky top-0">
+          <div className="flex items-center gap-2">
+            <span className="bg-slate-950 text-amber-400 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-extrabold">
+              Super Admin
+            </span>
+            <span>
+              Gestionando: <strong>{restaurant?.name || "Restaurante"}</strong>
+            </span>
+          </div>
+          <Link
+            href="/admin/restaurantes"
+            className="inline-flex items-center gap-1 bg-slate-950 text-white hover:bg-slate-800 px-3 py-1 rounded-lg text-[11px] font-extrabold transition-all shadow"
+          >
+            ← Volver a Consola Admin
+          </Link>
+        </div>
+      )}
+
       <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row pb-20 md:pb-0">
         
         {/* DESKTOP SIDEBAR */}
