@@ -20,6 +20,7 @@ import {
   Bell,
   Clock,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
