@@ -41,7 +41,7 @@ export const adminService = {
     if (!restaurants || restaurants.length === 0) return [];
 
     // Fetch all profiles to map owners
-    const ownerIds = [...new Set(restaurants.map((r: any) => r.owner_id).filter(Boolean))];
+    const ownerIds: string[] = Array.from(new Set(restaurants.map((r: any) => r.owner_id).filter(Boolean)));
     const profilesMap: Record<string, any> = {};
 
     if (ownerIds.length > 0) {
