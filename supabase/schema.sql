@@ -300,31 +300,23 @@ CREATE POLICY "Public can view order items" ON public.order_items
 
 -- TRIGGER: Auto-create Profile and Restaurant Relation on Auth Sign Up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
+RETURNS trigger 
+SECURITY DEFINER
+SET search_path = public, auth
+LANGUAGE plpgsql
+AS $$
 BEGIN
   INSERT INTO public.profiles (id, email, full_name, role)
   VALUES (
     new.id,
     new.email,
-    COALESCE(
-      CASE 
-        WHEN new.raw_user_meta_data IS NOT NULL THEN new.raw_user_meta_data->>'full_name'
-        ELSE NULL
-      END, 
-      'Usuario Restaurante'
-    ),
-    COALESCE(
-      CASE 
-        WHEN new.raw_user_meta_data IS NOT NULL AND (new.raw_user_meta_data->>'role') IS NOT NULL 
-        THEN (new.raw_user_meta_data->>'role')::user_role
-        ELSE NULL
-      END, 
-      'RESTAURANT_OWNER'
-    )
-  );
+    COALESCE(new.raw_user_meta_data->>'full_name', 'Usuario Restaurante'),
+    COALESCE((new.raw_user_meta_data->>'role')::public.user_role, 'RESTAURANT_OWNER'::public.user_role)
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Trigger execution
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
