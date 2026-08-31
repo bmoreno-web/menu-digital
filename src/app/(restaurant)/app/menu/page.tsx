@@ -83,8 +83,8 @@ export default function MenuCreatorPage() {
               })) || []
             );
           } else {
-            // Load initial mock item
-            handleAddInitialItems(cats[0]?.name || "Proteína Principal");
+            // Start clean with empty items list
+            setMenuItems([]);
           }
 
           // Fetch historical menus for cloning (Section 15)
@@ -100,10 +100,8 @@ export default function MenuCreatorPage() {
     loadData();
   }, []);
 
-  const handleAddInitialItems = (catName: string) => {
-    setMenuItems([
-      { category_name: catName, name: "", description: "", price: 18000, is_available: true }
-    ]);
+  const handleAddInitialItems = () => {
+    setMenuItems([]);
   };
 
   const handleAddItem = (categoryName: string) => {
@@ -167,12 +165,12 @@ export default function MenuCreatorPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (menuItems.length === 0) {
-      setFeedback("Agrega al menos un plato a tu menú.");
-      return;
-    }
-    if (menuItems.some((i) => !i.name.trim())) {
-      setFeedback("Todos los platos agregados deben tener un nombre.");
+
+    // Auto-filter out any blank or untouched dish cards
+    const validItems = menuItems.filter((i) => i.name && i.name.trim().length > 0);
+
+    if (validItems.length === 0) {
+      setFeedback("Agrega al menos un plato con nombre a tu menú.");
       return;
     }
 
@@ -185,10 +183,11 @@ export default function MenuCreatorPage() {
         menuDate,
         menuTitle,
         menuStatus,
-        menuItems
+        validItems
       );
       setMenuId(saved.id);
-      setFeedback("Menú guardado y publicado con éxito.");
+      setMenuItems(validItems);
+      setFeedback("¡Menú guardado y publicado con éxito!");
       
       // Reload history list
       const history = await restaurantService.getMenusList(restaurant.id);
@@ -335,7 +334,6 @@ export default function MenuCreatorPage() {
                                       <input
                                         type="text"
                                         placeholder="Nombre del plato (ej: Pollo Guisado)"
-                                        required
                                         className="w-full h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600"
                                         value={item.name}
                                         onChange={(e) =>
@@ -347,7 +345,6 @@ export default function MenuCreatorPage() {
                                       <input
                                         type="number"
                                         placeholder="Precio"
-                                        required
                                         className="w-full h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-brand-700"
                                         value={item.price}
                                         onChange={(e) =>
