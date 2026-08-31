@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
+import { SITE_CONFIG } from "@/config/site";
 import { formatCurrency, getLocalDateString } from "@/lib/utils";
 import { optimizeDishImage } from "@/lib/imageOptimizer";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
