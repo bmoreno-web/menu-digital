@@ -55,15 +55,6 @@ export default function AdminRestaurantes() {
     localStorage.setItem("admin_active_restaurant", JSON.stringify(res));
     router.push("/app/dashboard");
   };
-    name: "",
-    ownerName: "",
-    ownerEmail: "",
-    whatsapp: "",
-    city: "Barranquilla",
-    address: "",
-    restaurantType: "Corrientazo / Almuerzo Casero",
-    planTier: "free",
-  });
 
   async function loadRestaurants() {
     try {
