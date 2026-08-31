@@ -111,7 +111,8 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     setError(null);
 
-    const deliveryFee = formData.deliveryType === "DOMICILIO" ? Number(restaurant.delivery_fee) : 0;
+    const rawDeliveryFee = restaurant?.delivery_fee ? Number(restaurant.delivery_fee) : 0;
+    const deliveryFee = formData.deliveryType === "DOMICILIO" ? (isNaN(rawDeliveryFee) ? 0 : rawDeliveryFee) : 0;
 
     try {
       const order = await orderService.createOrder({
@@ -154,8 +155,9 @@ export default function CheckoutPage() {
     );
   }
 
-  const subtotal = getSubtotal();
-  const deliveryFee = formData.deliveryType === "DOMICILIO" ? Number(restaurant.delivery_fee) : 0;
+  const subtotal = Number(getSubtotal()) || 0;
+  const rawDeliveryFee = restaurant?.delivery_fee ? Number(restaurant.delivery_fee) : 0;
+  const deliveryFee = formData.deliveryType === "DOMICILIO" ? (isNaN(rawDeliveryFee) ? 0 : rawDeliveryFee) : 0;
   const total = subtotal + deliveryFee;
 
   return (

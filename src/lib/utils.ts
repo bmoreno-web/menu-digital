@@ -6,12 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number | string | null | undefined): string {
+  const numericAmount = Number(amount);
+  const safeAmount = isNaN(numericAmount) ? 0 : numericAmount;
   return new Intl.NumberFormat(SITE_CONFIG.currency.locale, {
     style: "currency",
     currency: SITE_CONFIG.currency.code,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(safeAmount);
 }
 
 export function formatDate(dateString: string): string {
