@@ -28,19 +28,42 @@ export const adminService = {
 
     // Real Supabase Mode
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { data: restaurants, error } = await supabase
       .from("restaurants")
-      .select(`
-        *,
-        owner:profiles!restaurants_owner_id_fkey(full_name, email)
-      `)
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching admin restaurants:", error);
       throw error;
     }
-    return data;
+
+    if (!restaurants || restaurants.length === 0) return [];
+
+    // Fetch all profiles to map owners
+    const ownerIds = [...new Set(restaurants.map((r: any) => r.owner_id).filter(Boolean))];
+    const profilesMap: Record<string, any> = {};
+
+    if (ownerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", ownerIds);
+
+      if (profiles) {
+        profiles.forEach((p: any) => {
+          profilesMap[p.id] = p;
+        });
+      }
+    }
+
+    return restaurants.map((r: any) => ({
+      ...r,
+      owner: profilesMap[r.owner_id] || {
+        full_name: r.name || "Usuario Restaurante",
+        email: r.phone ? `WA: ${r.phone}` : "contacto@menu-digital.com",
+      },
+    }));
   },
 
   // Toggle restaurant is_active flag

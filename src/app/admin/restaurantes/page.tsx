@@ -147,7 +147,7 @@ export default function AdminRestaurantes() {
         restaurantType: "Corrientazo / Almuerzo Casero",
         planTier: "free",
       });
-      loadRestaurants();
+      await loadRestaurants();
     } catch (err: any) {
       alert(err?.message || "Error al crear el restaurante.");
     } finally {

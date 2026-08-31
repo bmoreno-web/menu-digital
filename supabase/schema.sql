@@ -227,23 +227,44 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- PROFILES Policies
-CREATE POLICY "Users can view their own profile" ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+CREATE POLICY "Users and admins can view profiles" ON public.profiles
+  FOR SELECT USING (
+    auth.uid() = id OR 
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+  );
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
 -- RESTAURANTS Policies
--- Public can view active restaurants by slug
-CREATE POLICY "Public can view active restaurants" ON public.restaurants
-  FOR SELECT USING (is_active = true);
+-- Public can view active restaurants by slug, and admins can view all
+DROP POLICY IF EXISTS "Public can view active restaurants" ON public.restaurants;
+CREATE POLICY "Public and admins can view restaurants" ON public.restaurants
+  FOR SELECT USING (
+    is_active = true OR
+    owner_id = auth.uid() OR
+    public.is_member_of_restaurant(id) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+  );
 
 -- Restaurant owners and staff can manage their restaurant
-CREATE POLICY "Members can manage their restaurant" ON public.restaurants
-  FOR ALL USING (public.is_member_of_restaurant(id) OR owner_id = auth.uid());
+DROP POLICY IF EXISTS "Members can manage their restaurant" ON public.restaurants;
+CREATE POLICY "Members and admins can manage restaurants" ON public.restaurants
+  FOR ALL USING (
+    owner_id = auth.uid() OR
+    public.is_member_of_restaurant(id) OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+  );
 
-CREATE POLICY "Authenticated users can create a restaurant" ON public.restaurants
-  FOR INSERT WITH CHECK (auth.uid() = owner_id);
+DROP POLICY IF EXISTS "Authenticated users can create a restaurant" ON public.restaurants;
+CREATE POLICY "Authenticated users and admins can create a restaurant" ON public.restaurants
+  FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL OR
+    auth.uid() = owner_id OR
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+  );
 
 -- MENUS Policies
 -- Public can view published menus
