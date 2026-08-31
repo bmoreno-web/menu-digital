@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
-import { SITE_CONFIG } from "@/config/site";
+import { getLocalDateString } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -51,8 +51,8 @@ export default function MenuCreatorPage() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   useEffect(() => {
-    // Default menu date is current date in local YYYY-MM-DD
-    const today = new Date().toISOString().split("T")[0];
+    // Default menu date is current local date
+    const today = getLocalDateString();
     setMenuDate(today);
 
     async function loadData() {

@@ -7,7 +7,7 @@ import { restaurantService } from "@/services/restaurantService";
 import { orderService } from "@/services/orderService";
 import { subscriptionService } from "@/services/subscriptionService";
 import { SITE_CONFIG } from "@/config/site";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getLocalDateString } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -110,7 +110,7 @@ export default function RestaurantDashboard() {
   }
 
   // Calculate stats for HOY (Section 24)
-  const todayDateStr = new Date().toISOString().split("T")[0];
+  const todayDateStr = getLocalDateString();
   const todayOrders = orders.filter((o) => o.created_at.startsWith(todayDateStr));
   const activeOrders = todayOrders.filter((o) => o.status !== "ENTREGADO" && o.status !== "CANCELADO");
   

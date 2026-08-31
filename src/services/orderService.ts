@@ -95,83 +95,17 @@ export const orderService = {
       return { ...newOrder, items: newItems };
     }
 
-    const supabase = createClient();
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-    // 1. Resolve or create customer profile
-    let customerId = null;
-    const { data: existingCustomer } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("restaurant_id", data.restaurantId)
-      .eq("phone", data.customerPhone)
-      .maybeSingle();
-
-    if (!existingCustomer) {
-      const { data: newCustomer } = await supabase
-        .from("customers")
-        .insert({
-          restaurant_id: data.restaurantId,
-          phone: data.customerPhone,
-          name: data.customerName,
-          address: data.deliveryAddress,
-          total_spent: totalAmount,
-        })
-        .select()
-        .single();
-      if (newCustomer) customerId = newCustomer.id;
-    } else {
-      customerId = existingCustomer.id;
-      await supabase
-        .from("customers")
-        .update({
-          total_orders: existingCustomer.total_orders + 1,
-          total_spent: Number(existingCustomer.total_spent) + totalAmount,
-          last_order_at: new Date().toISOString(),
-        })
-        .eq("id", existingCustomer.id);
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "Error al registrar el pedido.");
     }
-
-    // 2. Insert order
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        restaurant_id: data.restaurantId,
-        customer_id: customerId,
-        customer_name: data.customerName,
-        customer_phone: data.customerPhone,
-        delivery_type: data.deliveryType,
-        delivery_address: data.deliveryAddress,
-        delivery_notes: data.deliveryNotes,
-        payment_method: data.paymentMethod,
-        total_amount: totalAmount,
-        delivery_fee: data.deliveryFee,
-        status: "NUEVO",
-      })
-      .select()
-      .single();
-
-    if (orderError || !order) throw orderError;
-
-    // 3. Insert items
-    const itemsToInsert = data.items.map((i) => ({
-      order_id: order.id,
-      menu_item_id: i.menuItemId,
-      item_name: i.name,
-      category_name: i.categoryName,
-      quantity: i.quantity,
-      unit_price: i.price,
-      subtotal: i.price * i.quantity,
-      notes: i.notes,
-    }));
-
-    const { data: insertedItems, error: itemsError } = await supabase
-      .from("order_items")
-      .insert(itemsToInsert)
-      .select();
-
-    if (itemsError) throw itemsError;
-
-    return { ...order, items: insertedItems as OrderItem[] };
+    return result.order as Order;
   },
 
   // 2. OBTENER PEDIDOS DE UN RESTAURANTE
@@ -199,7 +133,7 @@ export const orderService = {
     if (ordersError) throw ordersError;
     return orders.map((o: any) => ({
       ...o,
-      items: o.order_items as OrderItem[],
+      items: (o.order_items || []) as OrderItem[],
     }));
   },
 
@@ -217,16 +151,21 @@ export const orderService = {
     const supabase = createClient();
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("*, order_items(*)")
+      .select("*")
       .eq("id", orderId)
       .maybeSingle();
 
     if (orderError) throw orderError;
     if (!order) return null;
 
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", order.id);
+
     return {
       ...order,
-      items: order.order_items as OrderItem[],
+      items: (items || []) as OrderItem[],
     };
   },
 

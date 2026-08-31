@@ -17,7 +17,19 @@ export function formatCurrency(amount: number | string | null | undefined): stri
 }
 
 export function formatDate(dateString: string): string {
+  if (!dateString) return "";
   try {
+    // If format is YYYY-MM-DD, parse manually to avoid UTC midnight shifting back in UTC-5
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split("-").map(Number);
+      const date = new Date(year, month - 1, day, 12, 0, 0);
+      return new Intl.DateTimeFormat("es-CO", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(date);
+    }
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("es-CO", {
       weekday: "long",
@@ -28,6 +40,14 @@ export function formatDate(dateString: string): string {
   } catch {
     return dateString;
   }
+}
+
+export function getLocalDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function slugify(text: string): string {
