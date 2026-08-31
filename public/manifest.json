@@ -1,6 +1,6 @@
 {
-  "name": "PROJECT_NAME — Menú Digital y Pedidos",
-  "short_name": "PROJECT_NAME",
+  "name": "Menú Digital — Pedidos para Restaurantes",
+  "short_name": "Menú Digital",
   "description": "Publica tu menú diario de hoy y recibe pedidos directamente sin pagar comisiones.",
   "start_url": "/",
   "display": "standalone",

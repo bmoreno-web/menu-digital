@@ -68,8 +68,8 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
               <UtensilsCrossed className="h-4.5 w-4.5" />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-sm text-slate-900 leading-none">
-                {SITE_CONFIG.name}
+              <span className="font-extrabold text-sm text-slate-900 leading-none truncate max-w-[170px]">
+                {restaurant?.name || SITE_CONFIG.name}
               </span>
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                 Panel de Control

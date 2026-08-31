@@ -372,7 +372,7 @@ export default function RestaurantConfiguration() {
                 )}
                 
                 <div className="text-[9px] font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-full inline-block mt-3 uppercase tracking-wider leading-none">
-                  ⚡ PROJECT_NAME
+                  ⚡ {restaurant?.name || SITE_CONFIG.name}
                 </div>
               </div>
 

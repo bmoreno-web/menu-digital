@@ -1,5 +1,5 @@
 export const SITE_CONFIG = {
-  name: "PROJECT_NAME", // Centralized name as required in Section 0
+  name: "Menú Digital",
   tagline: "Tu menú de hoy. Tus pedidos. Sin complicaciones.",
   subheading: "Publica tu menú diario en menos de 2 minutos, recibe pedidos directamente de tus clientes y administra todo desde un solo lugar sin pagar comisiones por venta.",
   currency: {
@@ -9,7 +9,7 @@ export const SITE_CONFIG = {
   },
   support: {
     whatsapp: "+573000000000",
-    email: "hola@projectname.com",
+    email: "soporte@menudigital.co",
   },
   urls: {
     login: "/login",
