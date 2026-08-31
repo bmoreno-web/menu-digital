@@ -17,7 +17,8 @@ export const metadata: Metadata = {
   description: SITE_CONFIG.subheading,
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
+    apple: "/icons/icon-192.svg",
   },
   openGraph: {
     type: "website",

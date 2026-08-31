@@ -88,8 +88,8 @@ export function InstallPwaButton({
       ) : variant === "banner" ? (
         <div className={`bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-xs ${className}`}>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Smartphone className="h-5 w-5" />
+            <div className="h-10 w-10 rounded-xl overflow-hidden shadow-xs shrink-0 border border-brand-200">
+              <img src="/icons/icon-192.svg" alt="Icono Menú Digital" className="h-full w-full object-cover" />
             </div>
             <div>
               <p className="text-xs font-bold text-slate-900">¿Quieres tener el acceso directo?</p>
@@ -115,7 +115,7 @@ export function InstallPwaButton({
           onClick={handleInstallClick}
           className={`font-bold text-xs gap-1.5 ${className}`}
         >
-          <Smartphone className="h-3.5 w-3.5 text-brand-600" />
+          <img src="/icons/icon-192.svg" alt="Icono" className="h-4 w-4 rounded-sm" />
           <span>{label}</span>
         </Button>
       )}
@@ -132,8 +132,8 @@ export function InstallPwaButton({
               <X className="h-4 w-4" />
             </button>
 
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-brand-50 border border-brand-100 text-brand-600 flex items-center justify-center shadow-xs">
-              <Smartphone className="h-8 w-8" />
+            <div className="h-18 w-18 mx-auto rounded-2xl overflow-hidden shadow-lg border-2 border-brand-200">
+              <img src="/icons/icon-192.svg" alt="Icono Menú Digital" className="h-full w-full object-cover" />
             </div>
 
             <div>
