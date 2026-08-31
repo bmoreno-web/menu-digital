@@ -35,6 +35,8 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [trialStatus, setTrialStatus] = useState<any>(null);
 
+  const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
+
   // Cart
   const { cart, getSubtotal, clearCart } = useCart(slug);
 
@@ -74,12 +76,12 @@ export default function CheckoutPage() {
     loadRestaurant();
   }, [slug]);
 
-  // Handle empty cart redirect
+  // Handle empty cart redirect (only if user arrived with empty cart, not after placing order)
   useEffect(() => {
-    if (!isLoading && cart.length === 0) {
+    if (!isLoading && cart.length === 0 && !isOrderSubmitted && !isSubmitting) {
       router.replace(`/r/${slug}`);
     }
-  }, [cart, isLoading, slug, router]);
+  }, [cart, isLoading, isOrderSubmitted, isSubmitting, slug, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -134,14 +136,14 @@ export default function CheckoutPage() {
         })),
       });
 
-      // Clear the local cart
+      // Mark order as submitted so empty cart listener doesn't kick the user back
+      setIsOrderSubmitted(true);
       clearCart();
 
-      // Redirect to success/realtime-tracking page (Section 19)
-      router.push(`/r/${slug}/confirmacion/${order.id}`);
+      // Navigate to Thank You / Confirmation Page
+      window.location.href = `/r/${slug}/confirmacion/${order.id}`;
     } catch (err: any) {
       setError(err?.message || "Hubo un error al crear tu pedido. Intenta nuevamente.");
-    } finally {
       setIsSubmitting(false);
     }
   };
