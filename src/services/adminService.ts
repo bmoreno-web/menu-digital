@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
+import { SITE_CONFIG } from "@/config/site";
+import { slugify } from "@/lib/utils";
 
 const isMockMode = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -89,5 +91,119 @@ export const adminService = {
       console.error("Error updating restaurant plan tier:", error);
       throw error;
     }
+  },
+
+  // Delete restaurant
+  async deleteRestaurant(restaurantId: string) {
+    if (isMockMode()) {
+      const mockRestaurants = JSON.parse(localStorage.getItem("mock_restaurants") || "[]");
+      const filtered = mockRestaurants.filter((r: any) => r.id !== restaurantId);
+      localStorage.setItem("mock_restaurants", JSON.stringify(filtered));
+      return;
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("restaurants")
+      .delete()
+      .eq("id", restaurantId);
+
+    if (error) {
+      console.error("Error deleting restaurant:", error);
+      throw error;
+    }
+  },
+
+  // Create restaurant directly from Super Admin
+  async createRestaurant(data: {
+    name: string;
+    ownerName: string;
+    ownerEmail: string;
+    phone?: string;
+    whatsapp: string;
+    city: string;
+    address: string;
+    restaurantType: string;
+    planTier: string;
+  }) {
+    const slug = slugify(data.name) || `restaurante-${Date.now()}`;
+
+    if (isMockMode()) {
+      const mockRestaurants = JSON.parse(localStorage.getItem("mock_restaurants") || "[]");
+      const mockUsers = JSON.parse(localStorage.getItem("mock_users") || "[]");
+      const userId = crypto.randomUUID();
+      const restaurantId = crypto.randomUUID();
+
+      const newOwner = {
+        id: userId,
+        email: data.ownerEmail,
+        full_name: data.ownerName,
+        role: "RESTAURANT_OWNER",
+        created_at: new Date().toISOString(),
+      };
+      mockUsers.push(newOwner);
+      localStorage.setItem("mock_users", JSON.stringify(mockUsers));
+
+      const newRestaurant = {
+        id: restaurantId,
+        name: data.name,
+        slug,
+        owner_id: userId,
+        restaurant_type: data.restaurantType,
+        phone: data.phone || data.whatsapp,
+        whatsapp: data.whatsapp,
+        city: data.city,
+        address: data.address,
+        is_active: true,
+        plan_tier: data.planTier || "free",
+        created_at: new Date().toISOString(),
+      };
+      mockRestaurants.push(newRestaurant);
+      localStorage.setItem("mock_restaurants", JSON.stringify(mockRestaurants));
+      return newRestaurant;
+    }
+
+    const supabase = createClient();
+
+    // Get current super admin session to set as initial owner or link
+    const { data: { session } } = await supabase.auth.getSession();
+    const ownerId = session?.user?.id;
+
+    if (!ownerId) {
+      throw new Error("No hay sesión activa de administrador.");
+    }
+
+    // Insert restaurant
+    const { data: restaurantData, error: restaurantError } = await supabase
+      .from("restaurants")
+      .insert({
+        name: data.name,
+        slug: slug,
+        owner_id: ownerId,
+        restaurant_type: data.restaurantType,
+        phone: data.phone || data.whatsapp,
+        whatsapp: data.whatsapp,
+        city: data.city,
+        address: data.address,
+        plan_tier: data.planTier || "free",
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (restaurantError || !restaurantData) {
+      throw new Error(restaurantError?.message || "Error al crear el restaurante.");
+    }
+
+    // Create default categories
+    const categoriesToInsert = SITE_CONFIG.defaultCategories.map((name, idx) => ({
+      restaurant_id: restaurantData.id,
+      name,
+      display_order: idx,
+    }));
+    await supabase.from("menu_categories").insert(categoriesToInsert);
+
+    return restaurantData;
   }
 };
+

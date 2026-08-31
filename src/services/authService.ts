@@ -124,10 +124,10 @@ export const authService = {
     const userId = authData.user.id;
     const slug = slugify(data.restaurantName) || `restaurante-${userId.slice(0, 5)}`;
 
-    // Create profile
+    // Create profile (upsert to avoid conflict with auth trigger)
     const { error: profileError } = await supabase
       .from("profiles")
-      .insert({
+      .upsert({
         id: userId,
         email: data.email,
         full_name: data.responsibleName,

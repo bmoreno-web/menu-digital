@@ -5,7 +5,8 @@ import { adminService } from "@/services/adminService";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
+import { SITE_CONFIG } from "@/config/site";
 import {
   Store,
   Search,
@@ -16,6 +17,8 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
+  Plus,
+  Trash2,
   AlertTriangle,
 } from "lucide-react";
 
@@ -30,6 +33,20 @@ export default function AdminRestaurantes() {
   const [planFilter, setPlanFilter] = useState<"ALL" | "free" | "pro" | "enterprise">("ALL");
 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Modal State for New Restaurant
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newRestaurantForm, setNewRestaurantForm] = useState({
+    name: "",
+    ownerName: "",
+    ownerEmail: "",
+    whatsapp: "",
+    city: "Barranquilla",
+    address: "",
+    restaurantType: "Corrientazo / Almuerzo Casero",
+    planTier: "free",
+  });
 
   async function loadRestaurants() {
     try {
@@ -82,6 +99,54 @@ export default function AdminRestaurantes() {
     }
   };
 
+  const handleDeleteRestaurant = async (id: string, name: string) => {
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que deseas eliminar permanentemente el restaurante "${name}"?\nEsta acción no se puede deshacer.`
+    );
+    if (!confirmDelete) return;
+
+    setActionLoadingId(id);
+    try {
+      await adminService.deleteRestaurant(id);
+      setRestaurants((prev) => prev.filter((r) => r.id !== id));
+      alert(`Restaurante "${name}" eliminado con éxito.`);
+    } catch (err: any) {
+      alert(err?.message || "No se pudo eliminar el restaurante.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRestaurantForm.name.trim() || !newRestaurantForm.whatsapp.trim()) {
+      alert("Por favor ingresa el nombre y el WhatsApp del restaurante.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const created = await adminService.createRestaurant(newRestaurantForm);
+      alert(`¡Restaurante "${created.name}" creado con éxito!`);
+      setIsCreateModalOpen(false);
+      setNewRestaurantForm({
+        name: "",
+        ownerName: "",
+        ownerEmail: "",
+        whatsapp: "",
+        city: "Barranquilla",
+        address: "",
+        restaurantType: "Corrientazo / Almuerzo Casero",
+        planTier: "free",
+      });
+      loadRestaurants();
+    } catch (err: any) {
+      alert(err?.message || "Error al crear el restaurante.");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
@@ -131,16 +196,28 @@ export default function AdminRestaurantes() {
           </h1>
         </div>
         
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          className="gap-1.5 self-start"
-          isLoading={isRefreshing}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          <span>Actualizar Datos</span>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="gap-1.5 font-bold"
+            isLoading={isRefreshing}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Actualizar</span>
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="gap-1.5 font-bold"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Crear Restaurante</span>
+          </Button>
+        </div>
       </div>
 
       {/* METRICS GRID */}
@@ -281,7 +358,7 @@ export default function AdminRestaurantes() {
                   <th className="p-4">Creado el</th>
                   <th className="p-4 text-center">Estado de Operación</th>
                   <th className="p-4 text-center">Plan Asignado</th>
-                  <th className="p-4 pr-6 text-right">Enlace</th>
+                  <th className="p-4 pr-6 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -368,8 +445,8 @@ export default function AdminRestaurantes() {
                       </select>
                     </td>
 
-                    {/* View External Link */}
-                    <td className="p-4 pr-6 text-right">
+                    {/* Actions: View Link & Delete */}
+                    <td className="p-4 pr-6 text-right space-x-2">
                       <a
                         href={`/r/${res.slug}`}
                         target="_blank"
@@ -378,6 +455,15 @@ export default function AdminRestaurantes() {
                       >
                         <ExternalLink className="h-4 w-4" />
                       </a>
+
+                      <button
+                        onClick={() => handleDeleteRestaurant(res.id, res.name)}
+                        disabled={actionLoadingId === res.id}
+                        className="inline-flex items-center justify-center p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                        title="Eliminar Restaurante"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
 
                   </tr>
@@ -387,6 +473,112 @@ export default function AdminRestaurantes() {
           )}
         </CardContent>
       </Card>
+
+      {/* CREATE RESTAURANT MODAL */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Crear Nuevo Restaurante"
+        description="Agrega un restaurante directamente a la plataforma desde la consola de Super Admin."
+        maxWidth="lg"
+      >
+        <form onSubmit={handleCreateSubmit} className="space-y-4 text-left">
+          <Input
+            label="Nombre del Restaurante"
+            required
+            placeholder="Ej: Corrientazo Don Juan"
+            value={newRestaurantForm.name}
+            onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, name: e.target.value })}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Nombre del Propietario / Contacto"
+              required
+              placeholder="Ej: Juan Pérez"
+              value={newRestaurantForm.ownerName}
+              onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, ownerName: e.target.value })}
+            />
+
+            <Input
+              label="WhatsApp para Pedidos"
+              required
+              placeholder="Ej: 3001234567"
+              value={newRestaurantForm.whatsapp}
+              onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, whatsapp: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Ciudad"
+              required
+              value={newRestaurantForm.city}
+              onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, city: e.target.value })}
+            />
+
+            <Input
+              label="Dirección"
+              required
+              placeholder="Ej: Carrera 43 # 72-10"
+              value={newRestaurantForm.address}
+              onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, address: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Tipo de Restaurante
+              </label>
+              <select
+                value={newRestaurantForm.restaurantType}
+                onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, restaurantType: e.target.value })}
+                className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600"
+              >
+                {SITE_CONFIG.restaurantTypes.map((t) => (
+                  <option key={t.id} value={t.label}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Plan Inicial Asignado
+              </label>
+              <select
+                value={newRestaurantForm.planTier}
+                onChange={(e) => setNewRestaurantForm({ ...newRestaurantForm, planTier: e.target.value })}
+                className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600"
+              >
+                <option value="free">Prueba / Free (7 días / 30 pedidos)</option>
+                <option value="pro">Pro Restaurante (Ilimitado)</option>
+                <option value="enterprise">Enterprise (Cadenas / Sedes)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isCreating}
+              className="font-bold"
+            >
+              Guardar Restaurante
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
     </div>
   );
