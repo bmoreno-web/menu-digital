@@ -80,6 +80,28 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         </div>
       )}
 
+      {/* PENDING APPROVAL BANNER FOR RESTAURANT OWNER */}
+      {restaurant && !restaurant.is_active && user?.role !== "SUPER_ADMIN" && (
+        <div className="bg-amber-400 text-slate-950 px-4 py-3 text-xs font-bold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm border-b border-amber-500 z-40 sticky top-0">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 shrink-0 text-slate-950" />
+            <span>
+              <strong>Cuenta en Proceso de Activación:</strong> Tu restaurante está en proceso de verificación por el equipo de Menú Digital.
+            </span>
+          </div>
+          <a
+            href={`https://wa.me/573001234567?text=${encodeURIComponent(
+              `Hola, acabo de registrar mi restaurante "${restaurant?.name}" en Menú Digital. ¿Podrían activar mi cuenta para comenzar a vender por favor?`
+            )}`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-950 text-white hover:bg-slate-900 text-xs font-black shrink-0 transition-colors shadow-xs"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span>Pedir Activación por WhatsApp</span>
+          </a>
+        </div>
+      )}
+
       <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row pb-20 md:pb-0">
         
         {/* DESKTOP SIDEBAR */}

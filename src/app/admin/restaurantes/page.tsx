@@ -423,8 +423,8 @@ export default function AdminRestaurantes() {
               className="text-xs p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:border-brand-600"
             >
               <option value="ALL">Todos los Estados</option>
-              <option value="ACTIVE">Activos en Línea</option>
-              <option value="INACTIVE">Desactivados</option>
+              <option value="ACTIVE">🟢 Activos en Línea</option>
+              <option value="INACTIVE">🟡 Pendientes de Aprobación</option>
             </select>
 
             {/* Plan Select */}
@@ -505,29 +505,35 @@ export default function AdminRestaurantes() {
                       }) : "Fecha no disp."}
                     </td>
 
-                    {/* Toggle Active Button */}
+                    {/* Toggle Active Button / Aprobar */}
                     <td className="p-4 text-center">
-                      <button
-                        onClick={() => handleToggleActive(res.id, res.is_active)}
-                        disabled={actionLoadingId === res.id}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-[0.97] ${
-                          res.is_active
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-100 hover:bg-emerald-100/60"
-                            : "bg-rose-50 text-rose-800 border border-rose-100 hover:bg-rose-100/60"
-                        }`}
-                      >
-                        {res.is_active ? (
-                          <>
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                            <span>Activo</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-3.5 w-3.5 text-rose-600" />
-                            <span>Pausado</span>
-                          </>
-                        )}
-                      </button>
+                      {res.is_active ? (
+                        <button
+                          onClick={() => handleToggleActive(res.id, true)}
+                          disabled={actionLoadingId === res.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-[0.97] bg-emerald-50 text-emerald-800 border border-emerald-100 hover:bg-emerald-100/60"
+                          title="Clic para pausar el restaurante"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>Activo</span>
+                        </button>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">
+                            <Clock className="h-3 w-3 text-amber-600" />
+                            <span>Pendiente</span>
+                          </span>
+                          <button
+                            onClick={() => handleToggleActive(res.id, false)}
+                            disabled={actionLoadingId === res.id}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all active:scale-[0.97]"
+                            title="Aprobar y activar restaurante"
+                          >
+                            <Check className="h-3.5 w-3.5 stroke-[3]" />
+                            <span>Aprobar</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
 
                     {/* Plan Tier Select Dropdown */}

@@ -103,79 +103,25 @@ export const authService = {
     }
 
     // REAL SUPABASE IMPLEMENTATION
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "Error al registrar el restaurante.");
+    }
+
+    // Automatically sign in the user
     const supabase = createClient();
-    
-    // Sign Up auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password || "password123",
-      options: {
-        data: {
-          full_name: data.responsibleName,
-          role: "RESTAURANT_OWNER",
-        },
-      },
     });
 
-    if (authError || !authData.user) {
-      throw new Error(authError?.message || "Error al crear el usuario.");
-    }
-
-    const userId = authData.user.id;
-    const slug = slugify(data.restaurantName) || `restaurante-${userId.slice(0, 5)}`;
-
-    // Create profile (upsert to avoid conflict with auth trigger)
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: userId,
-        email: data.email,
-        full_name: data.responsibleName,
-        phone: data.phone,
-        role: "RESTAURANT_OWNER",
-      });
-
-    if (profileError) {
-      throw new Error("No se pudo crear el perfil del usuario: " + profileError.message);
-    }
-
-    // Create restaurant
-    const { data: restaurantData, error: restaurantError } = await supabase
-      .from("restaurants")
-      .insert({
-        name: data.restaurantName,
-        slug: slug,
-        owner_id: userId,
-        restaurant_type: data.restaurantType,
-        phone: data.phone,
-        whatsapp: data.whatsapp,
-        city: data.city,
-        address: data.address,
-        plan_tier: "free",
-      })
-      .select()
-      .single();
-
-    if (restaurantError || !restaurantData) {
-      throw new Error("No se pudo crear el restaurante: " + restaurantError?.message);
-    }
-
-    // Create restaurant-user mapping
-    await supabase.from("restaurant_users").insert({
-      restaurant_id: restaurantData.id,
-      user_id: userId,
-      role: "RESTAURANT_OWNER",
-    });
-
-    // Create initial categories
-    const categoriesToInsert = SITE_CONFIG.defaultCategories.map((name, idx) => ({
-      restaurant_id: restaurantData.id,
-      name,
-      display_order: idx,
-    }));
-    await supabase.from("menu_categories").insert(categoriesToInsert);
-
-    return { user: authData.user, restaurant: restaurantData };
+    return { user: result.user, restaurant: result.restaurant };
   },
 
   // 2. LOGIN
