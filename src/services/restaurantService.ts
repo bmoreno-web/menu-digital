@@ -183,112 +183,30 @@ export const restaurantService = {
   },
 
   // 7. CREAR O EDITAR UN MENÚ COMPLETO (Y SUS PLATOS)
-  async saveMenu(restaurantId: string, menuDate: string, title: string, status: "DRAFT" | "PUBLISHED", items: Partial<MenuItem>[]): Promise<Menu> {
-    if (isMockMode()) {
-      const mockMenus = JSON.parse(localStorage.getItem("mock_menus") || "[]");
-      const mockItems = JSON.parse(localStorage.getItem("mock_menu_items") || "[]");
+  async saveMenu(
+    restaurantId: string,
+    menuDate: string,
+    title: string,
+    status: "DRAFT" | "PUBLISHED",
+    items: Partial<MenuItem>[]
+  ): Promise<Menu> {
+    const res = await fetch("/api/restaurant/menu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        restaurantId,
+        menuDate,
+        title,
+        status,
+        items,
+      }),
+    });
 
-      // If status is PUBLISHED, make other menus ARCHIVED/DRAFT (Section 16)
-      if (status === "PUBLISHED") {
-        mockMenus.forEach((m: any) => {
-          if (m.restaurant_id === restaurantId && m.status === "PUBLISHED") {
-            m.status = "ARCHIVED";
-          }
-        });
-      }
-
-      // Check if menu for this date already exists
-      let menu = mockMenus.find((m: any) => m.restaurant_id === restaurantId && m.menu_date === menuDate);
-      if (!menu) {
-        menu = {
-          id: crypto.randomUUID(),
-          restaurant_id: restaurantId,
-          menu_date: menuDate,
-          title,
-          status,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        mockMenus.push(menu);
-      } else {
-        menu.title = title;
-        menu.status = status;
-        menu.updated_at = new Date().toISOString();
-      }
-
-      localStorage.setItem("mock_menus", JSON.stringify(mockMenus));
-
-      // Re-populate menu items
-      // 1. Remove old items of this menu
-      const filteredItems = mockItems.filter((i: any) => i.menu_id !== menu.id);
-      
-      // 2. Add new items
-      const newItems = items.map((item, idx) => ({
-        id: item.id || crypto.randomUUID(),
-        menu_id: menu.id,
-        restaurant_id: restaurantId,
-        category_id: item.category_id || null,
-        category_name: item.category_name || "General",
-        name: item.name || "",
-        description: item.description || "",
-        price: Number(item.price) || 0,
-        is_available: item.is_available !== undefined ? item.is_available : true,
-        display_order: idx,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }));
-
-      localStorage.setItem("mock_menu_items", JSON.stringify([...filteredItems, ...newItems]));
-      return { ...menu, items: newItems };
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "No se pudo guardar el menú.");
     }
-
-    const supabase = createClient();
-
-    if (status === "PUBLISHED") {
-      // Archive other published menus (Section 16)
-      await supabase
-        .from("menus")
-        .update({ status: "ARCHIVED" })
-        .eq("restaurant_id", restaurantId)
-        .eq("status", "PUBLISHED");
-    }
-
-    // Upsert menu
-    const { data: menuData, error: menuError } = await supabase
-      .from("menus")
-      .upsert(
-        { restaurant_id: restaurantId, menu_date: menuDate, title, status },
-        { onConflict: "restaurant_id,menu_date" }
-      )
-      .select()
-      .single();
-
-    if (menuError || !menuData) throw menuError;
-
-    // Delete existing items for this menu
-    await supabase.from("menu_items").delete().eq("menu_id", menuData.id);
-
-    // Insert new items
-    const itemsToInsert = items.map((item, idx) => ({
-      menu_id: menuData.id,
-      restaurant_id: restaurantId,
-      category_id: item.category_id || null,
-      category_name: item.category_name || "General",
-      name: item.name || "",
-      description: item.description || "",
-      price: Number(item.price) || 0,
-      is_available: item.is_available !== undefined ? item.is_available : true,
-      display_order: idx,
-    }));
-
-    const { data: insertedItems, error: itemsError } = await supabase
-      .from("menu_items")
-      .insert(itemsToInsert)
-      .select();
-
-    if (itemsError) throw itemsError;
-
-    return { ...menuData, items: insertedItems as MenuItem[] };
+    return result.menu as Menu;
   },
 
   // 8. OBTENER DETALLE DE UN MENÚ POR ID
