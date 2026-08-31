@@ -227,7 +227,16 @@ export default function DailyMenuPage() {
     );
   }
 
-  const categoriesList = categories.map((c) => c.name);
+  const defaultCategories = SITE_CONFIG.defaultCategories || [
+    "Platos Ejecutivos / Menú del Día",
+    "Sopas del Día",
+    "Bebidas",
+    "Adicionales",
+  ];
+  const categoriesList =
+    categories.length > 0
+      ? categories.map((c) => (typeof c === "string" ? c : c.name))
+      : defaultCategories;
 
   return (
     <div className="space-y-6">
@@ -247,6 +256,17 @@ export default function DailyMenuPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => handleAddItem(categoriesList[0] || "Platos Ejecutivos / Menú del Día")}
+            className="gap-1.5 font-bold shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Agregar Plato</span>
+          </Button>
+
           {pastMenus.length > 0 && (
             <Button
               type="button"

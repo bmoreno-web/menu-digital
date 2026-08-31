@@ -60,10 +60,6 @@ export const restaurantService = {
 
   // 3. OBTENER CATEGORÍAS DEL MENÚ
   async getCategories(restaurantId: string): Promise<MenuCategory[]> {
-    if (isMockMode()) {
-      const mockCats = JSON.parse(localStorage.getItem("mock_categories") || "[]");
-      return mockCats.filter((c: any) => c.restaurant_id === restaurantId);
-    }
     const supabase = createClient();
     const { data, error } = await supabase
       .from("menu_categories")
@@ -71,8 +67,43 @@ export const restaurantService = {
       .eq("restaurant_id", restaurantId)
       .order("display_order", { ascending: true });
 
-    if (error) throw error;
-    return data as MenuCategory[];
+    if (error) {
+      console.error("Error fetching categories:", error);
+    }
+
+    if (data && data.length > 0) {
+      return data as MenuCategory[];
+    }
+
+    // Auto-seed default categories if empty
+    const defaultCats = (SITE_CONFIG.defaultCategories || [
+      "Platos Ejecutivos / Menú del Día",
+      "Sopas del Día",
+      "Bebidas",
+      "Adicionales",
+    ]).map((name, idx) => ({
+      restaurant_id: restaurantId,
+      name,
+      display_order: idx,
+    }));
+
+    try {
+      const { data: inserted } = await supabase
+        .from("menu_categories")
+        .insert(defaultCats)
+        .select();
+      if (inserted && inserted.length > 0) {
+        return inserted as MenuCategory[];
+      }
+    } catch {
+      // Handled
+    }
+
+    return defaultCats.map((c, i) => ({
+      id: `cat-${i}`,
+      ...c,
+      created_at: new Date().toISOString(),
+    })) as MenuCategory[];
   },
 
   // 4. CREAR CATEGORÍA
