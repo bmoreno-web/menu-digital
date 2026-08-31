@@ -60,7 +60,7 @@ export interface MenuItem {
   name: string;
   description?: string;
   price: number;
-  image_url?: string;
+  image_url?: string | null;
   is_available: boolean;
   display_order: number;
   created_at: string;
