@@ -7,22 +7,22 @@ const isMockMode = () => false;
 export const restaurantService = {
   // 1. OBTENER PERFIL DEL RESTAURANTE
   async getProfile(idOrSlug: string): Promise<Restaurant> {
-    if (isMockMode()) {
-      const mockRestaurants = JSON.parse(localStorage.getItem("mock_restaurants") || "[]");
-      const rest = mockRestaurants.find(
-        (r: any) => r.id === idOrSlug || r.owner_id === idOrSlug || r.slug === idOrSlug
-      );
-      if (!rest) throw new Error("Restaurante no encontrado.");
-      return rest;
-    }
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("restaurants")
-      .select("*")
-      .or(`id.eq.${idOrSlug},owner_id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .single();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
 
-    if (error) throw error;
+    let query = supabase.from("restaurants").select("*");
+    if (isUuid) {
+      query = query.or(`id.eq.${idOrSlug},owner_id.eq.${idOrSlug}`);
+    } else {
+      query = query.eq("slug", idOrSlug);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error) {
+      console.error("Error fetching restaurant profile:", error);
+      throw error;
+    }
+    if (!data) throw new Error("Restaurante no encontrado.");
     return data as Restaurant;
   },
 
