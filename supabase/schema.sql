@@ -226,12 +226,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Helper function to check if current user is Super Admin without RLS recursion
+CREATE OR REPLACE FUNCTION public.is_super_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'SUPER_ADMIN'
+  );
+$$;
+
 -- PROFILES Policies
+DROP POLICY IF EXISTS "Users and admins can view profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 CREATE POLICY "Users and admins can view profiles" ON public.profiles
   FOR SELECT USING (
-    auth.uid() = id OR 
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+    auth.uid() = id OR public.is_super_admin()
   );
 
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
@@ -239,23 +253,25 @@ CREATE POLICY "Users can update their own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
 -- RESTAURANTS Policies
--- Public can view active restaurants by slug, and admins can view all
+-- Public can view active restaurants, owners can view theirs, and Super Admins can view ALL (active and pending)
+DROP POLICY IF EXISTS "Public and admins can view restaurants" ON public.restaurants;
 DROP POLICY IF EXISTS "Public can view active restaurants" ON public.restaurants;
 CREATE POLICY "Public and admins can view restaurants" ON public.restaurants
   FOR SELECT USING (
     is_active = true OR
     owner_id = auth.uid() OR
     public.is_member_of_restaurant(id) OR
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+    public.is_super_admin()
   );
 
 -- Restaurant owners and staff can manage their restaurant
+DROP POLICY IF EXISTS "Members and admins can manage restaurants" ON public.restaurants;
 DROP POLICY IF EXISTS "Members can manage their restaurant" ON public.restaurants;
 CREATE POLICY "Members and admins can manage restaurants" ON public.restaurants
   FOR ALL USING (
     owner_id = auth.uid() OR
     public.is_member_of_restaurant(id) OR
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'SUPER_ADMIN')
+    public.is_super_admin()
   );
 
 DROP POLICY IF EXISTS "Authenticated users can create a restaurant" ON public.restaurants;
