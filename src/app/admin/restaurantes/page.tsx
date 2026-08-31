@@ -25,6 +25,8 @@ import {
   Lock,
   Mail,
   User,
+  Clock,
+  Check,
 } from "lucide-react";
 
 export default function AdminRestaurantes() {
