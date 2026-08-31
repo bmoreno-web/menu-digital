@@ -126,7 +126,7 @@ export const authService = {
 
   // 2. LOGIN
   async login(email: string, password?: string) {
-    const trimmedInput = email.trim();
+    const trimmedInput = (email || "").trim().toLowerCase();
     const normalizedEmail = trimmedInput.includes("@")
       ? trimmedInput
       : (trimmedInput === "bmoreno" ? "bmoreno@menu-digital.com" : `${trimmedInput}@menu-digital.com`);

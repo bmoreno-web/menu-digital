@@ -38,15 +38,14 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const { user } = await authService.login(formData.email, formData.password);
+      const { user } = await authService.login(formData.email.trim(), formData.password.trim());
       if (user.role === "SUPER_ADMIN") {
-        router.push("/admin/restaurantes");
+        window.location.href = "/admin/restaurantes";
       } else {
-        router.push("/app/dashboard");
+        window.location.href = "/app/dashboard";
       }
     } catch (err: any) {
       setError(err?.message || "Error al iniciar sesión. Revisa tus credenciales.");
-    } finally {
       setIsLoading(false);
     }
   };
