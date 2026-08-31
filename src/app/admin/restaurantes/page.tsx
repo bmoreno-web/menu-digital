@@ -99,9 +99,15 @@ export default function AdminRestaurantes() {
     loadRestaurants();
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    loadRestaurants();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("mock_restaurants");
+      localStorage.removeItem("mock_users");
+      localStorage.removeItem("mock_orders");
+      localStorage.removeItem("mock_order_items");
+    }
+    await loadRestaurants();
   };
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
