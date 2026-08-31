@@ -1,10 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { Restaurant, Menu, MenuItem, MenuCategory } from "@/types";
 
-const isMockMode = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !supabaseUrl || supabaseUrl.includes("placeholder") || supabaseUrl.includes("your-project");
-};
+const isMockMode = () => false;
 
 export const restaurantService = {
   // 1. OBTENER PERFIL DEL RESTAURANTE

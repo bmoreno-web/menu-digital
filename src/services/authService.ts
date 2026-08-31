@@ -2,11 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { SITE_CONFIG } from "@/config/site";
 import { slugify } from "@/lib/utils";
 
-// Detect if we are using placeholder credentials
-const isMockMode = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return !supabaseUrl || supabaseUrl.includes("placeholder") || supabaseUrl.includes("your-project");
-};
+const isMockMode = () => false;
 
 export const authService = {
   // 1. REGISTRO
