@@ -28,7 +28,10 @@ export const adminService = {
 
     // Real Supabase API Route (Bypasses RLS so pending and inactive restaurants are always visible)
     try {
-      const res = await fetch("/api/admin/restaurants");
+      const res = await fetch(`/api/admin/restaurants?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
+      });
       const result = await res.json();
       if (res.ok && result.success && Array.isArray(result.restaurants)) {
         return result.restaurants;

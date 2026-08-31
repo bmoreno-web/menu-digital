@@ -3,6 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { SITE_CONFIG } from "@/config/site";
 import { slugify } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const getAdminSupabase = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
