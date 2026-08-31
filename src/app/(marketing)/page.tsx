@@ -500,9 +500,9 @@ export default function MarketingLandingPage() {
                 }`}
               >
                 {plan.isPopular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="bg-brand-600 text-white text-[11px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-sm">
-                      Más Elegido por Restaurantes
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
+                    <span className="bg-brand-600 text-white text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider px-4 py-1 rounded-full shadow-md inline-flex items-center gap-1">
+                      ⭐ Más Elegido
                     </span>
                   </div>
                 )}
