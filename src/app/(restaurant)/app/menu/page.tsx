@@ -23,6 +23,8 @@ import {
   Sparkles,
   Star,
   Check,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 interface FormItem {
@@ -207,6 +209,28 @@ export default function DailyMenuPage() {
     } finally {
       setUploadingIdx(null);
     }
+  };
+
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    setMenuItems((prev) => {
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[index - 1];
+      copy[index - 1] = temp;
+      return copy;
+    });
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === menuItems.length - 1) return;
+    setMenuItems((prev) => {
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[index + 1];
+      copy[index + 1] = temp;
+      return copy;
+    });
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -591,9 +615,31 @@ export default function DailyMenuPage() {
                       />
                     </div>
 
-                    {/* ACTIONS: OFRECER HOY, ESPECIAL, DISPONIBLE, ELIMINAR */}
+                    {/* ACTIONS: REORDER, OFRECER HOY, ESPECIAL, DISPONIBLE, ELIMINAR */}
                     <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
                       
+                      {/* REORDER BUTTONS */}
+                      <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50 p-0.5" title="Reordenar plato">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveUp(idx)}
+                          disabled={idx === 0}
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-white disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
+                          title="Subir plato"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDown(idx)}
+                          disabled={idx === menuItems.length - 1}
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-white disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
+                          title="Bajar plato"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
                       {/* TOGGLE ACTIVE TODAY */}
                       <button
                         type="button"
