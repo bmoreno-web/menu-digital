@@ -42,7 +42,7 @@ export default function LoginPage() {
       if (user.role === "SUPER_ADMIN") {
         window.location.href = "/admin/restaurantes";
       } else {
-        window.location.href = "/app/dashboard";
+        window.location.href = "/app/menu";
       }
     } catch (err: any) {
       const msg = err?.message || "";
@@ -81,7 +81,7 @@ export default function LoginPage() {
       });
 
       await authService.login("demo@buensabor.com", "demopassword");
-      router.push("/app/dashboard");
+      router.push("/app/menu");
     } catch (err) {
       setError("No se pudo iniciar la sesión demo de prueba.");
     } finally {

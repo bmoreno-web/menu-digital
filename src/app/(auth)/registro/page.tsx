@@ -53,7 +53,7 @@ export default function RegisterPage() {
 
     try {
       await authService.register(formData);
-      router.push("/app/dashboard");
+      router.push("/app/menu");
     } catch (err: any) {
       setError(err?.message || "Ocurrió un error al registrar el restaurante.");
     } finally {

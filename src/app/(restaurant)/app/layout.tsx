@@ -55,9 +55,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   };
 
   const navItems = [
-    { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
     { label: "Menú Diario", href: "/app/menu", icon: Utensils },
     { label: "Pedidos", href: "/app/pedidos", icon: ShoppingBag },
+    { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
     { label: "Clientes", href: "/app/clientes", icon: Users },
     { label: "Estadísticas", href: "/app/estadisticas", icon: BarChart3 },
     { label: "Configuración", href: "/app/configuracion", icon: Settings },

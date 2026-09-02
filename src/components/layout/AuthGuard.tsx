@@ -25,7 +25,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           
           // Role-based route guard
           if (pathname.startsWith("/admin") && session.user.role !== "SUPER_ADMIN") {
-            router.replace("/app/dashboard");
+            router.replace("/app/menu");
           }
         }
       } catch {

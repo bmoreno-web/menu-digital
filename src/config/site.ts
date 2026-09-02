@@ -14,7 +14,7 @@ export const SITE_CONFIG = {
   urls: {
     login: "/login",
     register: "/registro",
-    app: "/app/dashboard",
+    app: "/app/menu",
   },
   plans: [
     {

@@ -79,7 +79,7 @@ export default function AdminRestaurantes() {
 
   const handleManageRestaurant = (res: any) => {
     localStorage.setItem("admin_active_restaurant", JSON.stringify(res));
-    router.push("/app/dashboard");
+    router.push("/app/menu");
   };
 
   async function loadRestaurants() {
