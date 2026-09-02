@@ -23,12 +23,15 @@ import {
   ShoppingBag,
   Store,
   ChevronRight,
+  Menu as MenuIcon,
+  X,
 } from "lucide-react";
 
 export default function MarketingLandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [demoActiveCategory, setDemoActiveCategory] = useState("Proteína");
   const [demoOrderCount, setDemoOrderCount] = useState(2);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const demoMenuItems = [
     {
@@ -145,19 +148,91 @@ export default function MarketingLandingPage() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Link href={SITE_CONFIG.urls.login}>
+          <div className="flex items-center gap-2">
+            <Link href={SITE_CONFIG.urls.login} className="hidden sm:inline-flex">
               <Button variant="ghost" size="sm" className="font-semibold">
                 Iniciar Sesión
               </Button>
             </Link>
-            <Link href={SITE_CONFIG.urls.register}>
-              <Button variant="primary" size="sm" className="hidden sm:inline-flex shadow-sm">
+            <Link href={SITE_CONFIG.urls.register} className="hidden sm:inline-flex">
+              <Button variant="primary" size="sm" className="shadow-sm">
                 Crear Mi Restaurante
               </Button>
             </Link>
+
+            {/* MOBILE HAMBURGER BUTTON */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Abrir menú"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+            </button>
           </div>
         </div>
+
+        {/* MOBILE DROPDOWN MENU */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-200/80 bg-white p-4 space-y-3 shadow-xl animate-in slide-in-from-top-2 duration-150">
+            <div className="space-y-1">
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-brand-50 text-brand-700 font-extrabold text-sm"
+              >
+                <span>🔐 Iniciar Sesión / Administrar</span>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/registro"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-900 text-white font-extrabold text-sm shadow-sm"
+              >
+                <span>🚀 Crear Mi Restaurante</span>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex flex-col space-y-2 text-xs font-bold text-slate-600">
+              <a
+                href="#como-funciona"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 hover:bg-slate-50 rounded-lg"
+              >
+                Cómo funciona
+              </a>
+              <a
+                href="#demo-en-vivo"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 hover:bg-slate-50 rounded-lg"
+              >
+                Demo Interactivo
+              </a>
+              <a
+                href="#beneficios"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 hover:bg-slate-50 rounded-lg"
+              >
+                Beneficios
+              </a>
+              <a
+                href="#precios"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 hover:bg-slate-50 rounded-lg"
+              >
+                Precios
+              </a>
+              <a
+                href="#faq"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 hover:bg-slate-50 rounded-lg"
+              >
+                Preguntas Frecuentes
+              </a>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* HERO SECTION */}

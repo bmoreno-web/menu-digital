@@ -26,6 +26,10 @@ import {
   HelpCircle,
   Sparkles,
   Star,
+  Menu as MenuIcon,
+  X,
+  Settings,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function PublicRestaurantPage() {
@@ -38,6 +42,7 @@ export default function PublicRestaurantPage() {
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const [trialStatus, setTrialStatus] = useState<any>(null);
 
   // Cart Management
@@ -165,7 +170,33 @@ export default function PublicRestaurantPage() {
         <div className="absolute top-0 right-0 h-48 w-48 bg-brand-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 bg-accent-500/10 rounded-full blur-3xl" />
 
-        <div className="max-w-xl mx-auto px-4 pt-10 pb-6 space-y-4 relative z-10">
+        <div className="max-w-xl mx-auto px-4 pt-6 pb-6 space-y-4 relative z-10">
+          {/* TOP BAR WITH HAMBURGER MENU / ADMIN ACCESS */}
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">
+              {restaurant.restaurant_type}
+            </span>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-black backdrop-blur-md border border-white/15 transition-all shadow-sm"
+                title="Administrar restaurante"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                <span>Administrar</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsNavOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-black backdrop-blur-md border border-white/20 transition-all shadow-sm"
+                aria-label="Abrir menú"
+              >
+                <MenuIcon className="h-4 w-4" />
+                <span>Menú</span>
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">
@@ -608,6 +639,133 @@ export default function PublicRestaurantPage() {
               >
                 Pedir Ahora <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOBILE / SLIDE-OVER NAVIGATION DRAWER */}
+      {isNavOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsNavOpen(false)}
+          />
+
+          {/* Drawer content */}
+          <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-200">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                  {restaurant.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 truncate max-w-[170px]">{restaurant.name}</h3>
+                  <p className="text-[10px] text-slate-500 font-semibold">{restaurant.city}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNavOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                aria-label="Cerrar menú"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-5 space-y-5 overflow-y-auto">
+              {/* ADMIN SHORTCUT BUTTON */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-brand-50 to-emerald-50 border border-brand-200/80 space-y-2">
+                <div className="flex items-center gap-2 text-brand-900 font-extrabold text-xs">
+                  <ShieldCheck className="h-4 w-4 text-brand-600" />
+                  <span>¿Eres el dueño?</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-snug">
+                  Entra al panel para editar platos, precios y gestionar tus pedidos de hoy.
+                </p>
+                <Link
+                  href="/app/dashboard"
+                  onClick={() => setIsNavOpen(false)}
+                  className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-black shadow-sm transition-colors"
+                >
+                  <Settings className="h-3.5 w-3.5" /> Administrar Restaurante
+                </Link>
+              </div>
+
+              {/* QUICK LINKS */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider px-2">Navegación</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNavOpen(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <UtensilsCrossed className="h-4 w-4 text-brand-600" />
+                  <span>Ver Menú del Día</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNavOpen(false);
+                    handleModeChange("LLEVAR");
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <span>🛵</span>
+                  <span>Pedir para Llevar / Domicilio</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNavOpen(false);
+                    handleModeChange("MESA");
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <span>🍽️</span>
+                  <span>Pedir en Mesa</span>
+                </button>
+              </div>
+
+              {/* CONTACT LINKS */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider px-2">Contacto</span>
+                {restaurant.whatsapp && (
+                  <a
+                    href={`https://wa.me/${restaurant.whatsapp}`}
+                    target="_blank"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition-colors"
+                  >
+                    <MessageSquare className="h-4 w-4 text-emerald-600" />
+                    <span>WhatsApp del Restaurante</span>
+                  </a>
+                )}
+                {mapsUrl && (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <MapPin className="h-4 w-4 text-slate-500" />
+                    <span>Cómo llegar (Ubicación)</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 bg-slate-50 text-center">
+              <Link
+                href="/login"
+                onClick={() => setIsNavOpen(false)}
+                className="text-xs font-bold text-slate-500 hover:text-brand-600 transition-colors"
+              >
+                ¿Tienes otro restaurante? Iniciar Sesión
+              </Link>
             </div>
           </div>
         </div>

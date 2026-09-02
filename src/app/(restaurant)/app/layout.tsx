@@ -22,6 +22,7 @@ import {
   Clock,
   ExternalLink,
   MessageSquare,
+  X,
 } from "lucide-react";
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
   const [user, setUser] = useState<any>(null);
   const [restaurant, setRestaurant] = useState<any>(null);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -189,11 +191,19 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         {/* MOBILE HEADER */}
         <header className="md:hidden sticky top-0 z-30 w-full h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 backdrop-blur-md">
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="p-1.5 -ml-1.5 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Abrir menú"
+            >
+              <MenuIcon className="h-5 w-5" />
+            </button>
             <div className="h-8 w-8 rounded-lg bg-brand-600 text-white flex items-center justify-center">
               <UtensilsCrossed className="h-4 w-4" />
             </div>
             {restaurant && (
-              <span className="font-extrabold text-xs text-slate-900 truncate max-w-[160px]">
+              <span className="font-extrabold text-xs text-slate-900 truncate max-w-[150px]">
                 {restaurant.name}
               </span>
             )}
@@ -243,6 +253,92 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
             );
           })}
         </nav>
+
+        {/* MOBILE DRAWER */}
+        {isMobileDrawerOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setIsMobileDrawerOpen(false)}
+            />
+
+            {/* Drawer */}
+            <div className="relative w-72 max-w-[80vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                    <UtensilsCrossed className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 truncate max-w-[150px]">
+                      {restaurant?.name || SITE_CONFIG.name}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Panel de Control</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Nav links */}
+              <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileDrawerOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        isActive
+                          ? "bg-brand-600 text-white shadow-sm shadow-brand-600/20"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Icon className="h-4.5 w-4.5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              {/* Public link and PWA */}
+              <div className="p-3 border-t border-slate-100 space-y-2 bg-slate-50/50">
+                {restaurant && (
+                  <Link
+                    href={`/r/${restaurant.slug}`}
+                    target="_blank"
+                    className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 py-2 rounded-xl transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Ver Menú Público
+                  </Link>
+                )}
+                <InstallPwaButton
+                  variant="button"
+                  label="📱 Añadir Icono al Celular"
+                  className="w-full justify-center bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border-emerald-200 text-xs"
+                />
+                <button
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </AuthGuard>
