@@ -335,11 +335,7 @@ export default function PublicRestaurantPage() {
                               ⭐
                             </span>
                           </div>
-                        ) : (
-                          <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center text-amber-800 text-2xl shrink-0 shadow-inner">
-                            ✨
-                          </div>
-                        )}
+                        ) : null}
 
                         <div className="flex-1 min-w-0 space-y-1.5 text-left">
                           <div className="flex items-center gap-2">
