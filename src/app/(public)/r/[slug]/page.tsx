@@ -91,7 +91,11 @@ export default function PublicRestaurantPage() {
     );
   }
 
-  // Categories list
+  // Helper to identify special items
+  const isItemSpecial = (item: any) =>
+    Boolean(item.is_special || (item.description && item.description.startsWith("[ESPECIAL]")));
+
+  // Categories list (excludes categories that only contain specials)
   const categories = ["Todos"];
   if (menu && menu.items) {
     menu.items.forEach((item: any) => {
@@ -102,13 +106,15 @@ export default function PublicRestaurantPage() {
   }
 
   const specialItems = menu && menu.items
-    ? menu.items.filter((i: any) =>
-        Boolean(i.is_special || (i.description && i.description.startsWith("[ESPECIAL]")))
-      )
+    ? menu.items.filter((i: any) => isItemSpecial(i))
     : [];
 
+  // Exclude special items from repeating below because they are already featured at the top
   const filteredItems = menu && menu.items
-    ? menu.items.filter((i: any) => activeCategory === "Todos" || i.category_name === activeCategory)
+    ? menu.items.filter(
+        (i: any) =>
+          !isItemSpecial(i) && (activeCategory === "Todos" || i.category_name === activeCategory)
+      )
     : [];
 
   const cartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
@@ -421,11 +427,15 @@ export default function PublicRestaurantPage() {
           </div>
         )}
 
-        {/* Menu items list (Section 18) */}
+        {/* Menu items list (Section 18) - Displays dishes that are not featured as specials */}
         {menu && (
           <div className="space-y-3">
             {filteredItems.length === 0 ? (
-              <p className="text-center text-xs text-slate-400 italic py-6">No hay platos en esta categoría hoy.</p>
+              specialItems.length === 0 ? (
+                <p className="text-center text-xs text-slate-400 italic py-6">No hay platos disponibles en este momento.</p>
+              ) : activeCategory !== "Todos" ? (
+                <p className="text-center text-xs text-slate-400 italic py-6">No hay otros platos en esta categoría hoy.</p>
+              ) : null
             ) : (
               filteredItems.map((item: any) => {
                 const isSpecial = Boolean(
