@@ -285,21 +285,6 @@ export default function PublicRestaurantPage() {
         {/* SPECIAL OF THE DAY FEATURED SECTION */}
         {menu && specialItems.length > 0 && (
           <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/30">
-                  <Sparkles className="h-3.5 w-3.5 fill-white" />
-                  Especial del Día
-                </span>
-                <span className="text-xs font-bold text-amber-900 hidden sm:inline">
-                  Recomendado de hoy
-                </span>
-              </div>
-              <span className="text-[11px] font-extrabold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-md flex items-center gap-1">
-                ⭐ Plato Estrella
-              </span>
-            </div>
-
             <div className="grid grid-cols-1 gap-3.5">
               {specialItems.map((item: any) => {
                 const cleanDescription = (item.description || "")
@@ -339,8 +324,8 @@ export default function PublicRestaurantPage() {
 
                         <div className="flex-1 min-w-0 space-y-1.5 text-left">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full">
-                              {item.category_name}
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                              ⭐ Especial del Día
                             </span>
                             {!item.is_available && (
                               <Badge variant="danger" size="sm">
