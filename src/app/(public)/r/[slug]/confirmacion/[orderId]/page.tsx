@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { restaurantService } from "@/services/restaurantService";
@@ -78,10 +78,13 @@ export default function OrderConfirmationPage() {
     };
   }, [slug, orderId]);
 
-  // Launch initial celebration confetti on load for NUEVO order
+  const hasLaunchedConfetti = useRef(false);
+
+  // Launch initial celebration confetti only once on load for NUEVO order
   useEffect(() => {
-    if (order && !isLoading) {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    if (order && !isLoading && !hasLaunchedConfetti.current) {
+      hasLaunchedConfetti.current = true;
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
     }
   }, [order, isLoading]);
 
