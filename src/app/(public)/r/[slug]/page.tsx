@@ -41,7 +41,10 @@ export default function PublicRestaurantPage() {
   const [trialStatus, setTrialStatus] = useState<any>(null);
 
   // Cart Management
-  const { cart, addToCart, updateQuantity, getSubtotal } = useCart(slug);
+  const [orderMode, setOrderMode] = useState<"LLEVAR" | "MESA">("LLEVAR");
+
+  // Cart
+  const { cart, addToCart, syncPriceMode, updateQuantity, removeFromCart, getSubtotal } = useCart(slug);
   const [showCartDrawer, setShowCartDrawer] = useState(false);
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function PublicRestaurantPage() {
         const profile = await restaurantService.getProfile(slug);
         setRestaurant(profile);
 
-        const activeMenu = await restaurantService.getActiveMenu(profile.id);
+        const activeMenu = await restaurantService.getActiveMenu(profile.id, true);
         setMenu(activeMenu);
 
         const status = await subscriptionService.checkTrialStatus(profile.id);
@@ -111,9 +114,14 @@ export default function PublicRestaurantPage() {
   const cartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
   const subtotal = getSubtotal();
 
+  const handleModeChange = (mode: "LLEVAR" | "MESA") => {
+    setOrderMode(mode);
+    syncPriceMode(mode);
+  };
+
   const handleCheckoutRedirect = () => {
     if (cart.length === 0) return;
-    router.push(`/r/${slug}/pedido`);
+    router.push(`/r/${slug}/pedido?mode=${orderMode.toLowerCase()}`);
   };
 
   // Maps Link
@@ -239,6 +247,35 @@ export default function PublicRestaurantPage() {
           </div>
         )}
 
+        {/* ORDER MODE SELECTOR (MESA vs LLEVAR) */}
+        {menu && (
+          <div className="bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleModeChange("LLEVAR")}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                orderMode === "LLEVAR"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/20"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <span>🛵 Para Llevar / Domicilio</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleModeChange("MESA")}
+              className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                orderMode === "MESA"
+                  ? "bg-brand-600 text-white shadow-sm shadow-brand-600/20"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <span>🍽️ Para Comer en Mesa</span>
+            </button>
+          </div>
+        )}
+
         {/* SPECIAL OF THE DAY FEATURED SECTION */}
         {menu && specialItems.length > 0 && (
           <div className="space-y-3 pt-1">
@@ -262,6 +299,14 @@ export default function PublicRestaurantPage() {
                 const cleanDescription = (item.description || "")
                   .replace(/^\[ESPECIAL\]\s*/i, "")
                   .trim();
+                const activePrice =
+                  orderMode === "MESA"
+                    ? Number(item.price_dinein || item.price)
+                    : Number(item.price_takeaway || item.price);
+                const otherPrice =
+                  orderMode === "MESA"
+                    ? Number(item.price_takeaway || item.price)
+                    : Number(item.price_dinein || item.price);
 
                 return (
                   <div
@@ -317,11 +362,17 @@ export default function PublicRestaurantPage() {
                       <div className="flex items-center justify-between pt-3 border-t border-amber-200/60">
                         <div>
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                            Precio
+                            {orderMode === "MESA" ? "Precio en Mesa" : "Precio Para Llevar"}
                           </span>
-                          <span className="text-lg sm:text-xl font-black text-emerald-700">
-                            {formatCurrency(item.price)}
-                          </span>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-lg sm:text-xl font-black text-emerald-700">
+                              {formatCurrency(activePrice)}
+                            </span>
+                            <span className="text-[11px] font-semibold text-slate-400">
+                              ({orderMode === "MESA" ? "Llevar: " : "En mesa: "}
+                              {formatCurrency(otherPrice)})
+                            </span>
+                          </div>
                         </div>
 
                         {item.is_available && (!trialStatus || trialStatus.active) && (
@@ -329,7 +380,14 @@ export default function PublicRestaurantPage() {
                             type="button"
                             variant="primary"
                             size="sm"
-                            onClick={() => addToCart({ ...item, description: cleanDescription }, 1)}
+                            onClick={() =>
+                              addToCart(
+                                { ...item, price: activePrice, description: cleanDescription },
+                                1,
+                                "",
+                                orderMode
+                              )
+                            }
                             className="h-10 px-4 rounded-xl font-black gap-1.5 text-xs bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white shadow-md shadow-emerald-600/25 active:scale-95 transition-all"
                           >
                             <Plus className="h-4 w-4 stroke-[3]" /> Pedir Especial
@@ -376,6 +434,14 @@ export default function PublicRestaurantPage() {
                 const cleanDescription = (item.description || "")
                   .replace(/^\[ESPECIAL\]\s*/i, "")
                   .trim();
+                const activePrice =
+                  orderMode === "MESA"
+                    ? Number(item.price_dinein || item.price)
+                    : Number(item.price_takeaway || item.price);
+                const otherPrice =
+                  orderMode === "MESA"
+                    ? Number(item.price_takeaway || item.price)
+                    : Number(item.price_dinein || item.price);
 
                 return (
                   <Card
@@ -417,21 +483,32 @@ export default function PublicRestaurantPage() {
                           </div>
                         </div>
 
-                        <div className="text-right shrink-0">
-                          <span className="text-sm font-black text-brand-700">
-                            {formatCurrency(item.price)}
+                        <div className="text-right shrink-0 space-y-0.5">
+                          <span className="text-sm font-black text-brand-700 block">
+                            {formatCurrency(activePrice)}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400 block">
+                            {orderMode === "MESA" ? "Llevar: " : "Mesa: "}
+                            {formatCurrency(otherPrice)}
                           </span>
                         </div>
                       </div>
 
-                      {/* Add to cart action (Section 17) */}
+                      {/* Add to cart action */}
                       {item.is_available && (!trialStatus || trialStatus.active) && (
                         <div className="flex justify-end pt-1">
                           <Button
                             type="button"
                             variant="primary"
                             size="sm"
-                            onClick={() => addToCart({ ...item, description: cleanDescription }, 1)}
+                            onClick={() =>
+                              addToCart(
+                                { ...item, price: activePrice, description: cleanDescription },
+                                1,
+                                "",
+                                orderMode
+                              )
+                            }
                             className="h-9 px-3 rounded-lg font-bold gap-1 text-xs"
                           >
                             <Plus className="h-3.5 w-3.5" /> Agregar al Pedido

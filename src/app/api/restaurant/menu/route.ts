@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { encodeMenuItemMeta, decodeMenuItemMeta } from "@/lib/menuUtils";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -87,13 +88,10 @@ export async function POST(req: NextRequest) {
     // 3. Delete old items for this menu
     await adminSupabase.from("menu_items").delete().eq("menu_id", menuId);
 
-    // 4. Insert new items with image_url, description, price and is_special flag
+    // 4. Insert new items with dual prices, active status, and is_special flag
     const validItems = items.filter((i: any) => i.name && i.name.trim().length > 0);
     const itemsToInsert = validItems.map((item: any, idx: number) => {
-      const rawDesc = item.description ? item.description.trim() : "";
-      const isSpecial = Boolean(item.is_special || rawDesc.startsWith("[ESPECIAL]"));
-      const cleanDesc = rawDesc.replace(/^\[ESPECIAL\]\s*/i, "").trim();
-      const finalDesc = isSpecial ? `[ESPECIAL] ${cleanDesc}`.trim() : cleanDesc;
+      const { finalDesc, price } = encodeMenuItemMeta(item);
 
       return {
         menu_id: menuId,
@@ -101,7 +99,7 @@ export async function POST(req: NextRequest) {
         category_name: item.category_name || "Platos del Día",
         name: item.name.trim(),
         description: finalDesc,
-        price: Number(item.price) || 0,
+        price,
         image_url: item.image_url || null,
         is_available: item.is_available !== undefined ? item.is_available : true,
         display_order: idx,
@@ -119,17 +117,7 @@ export async function POST(req: NextRequest) {
       insertedItems = ins || [];
     }
 
-    const formattedItems = insertedItems.map((item: any) => {
-      const isSpecial = Boolean(
-        item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
-      );
-      const cleanDesc = (item.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim();
-      return {
-        ...item,
-        is_special: isSpecial,
-        description: cleanDesc,
-      };
-    });
+    const formattedItems = insertedItems.map((item: any) => decodeMenuItemMeta(item));
 
     return NextResponse.json({
       success: true,

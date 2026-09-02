@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { Restaurant, Menu, MenuItem, MenuCategory } from "@/types";
 import { SITE_CONFIG } from "@/config/site";
+import { decodeMenuItemMeta } from "@/lib/menuUtils";
 
 const isMockMode = () => false;
 
@@ -191,14 +192,15 @@ export const restaurantService = {
   },
 
   // 5. OBTENER MENÚ ACTIVO (PÚBLICO O PRIVADO)
-  async getActiveMenu(restaurantId: string): Promise<Menu | null> {
+  async getActiveMenu(restaurantId: string, forPublic: boolean = false): Promise<Menu | null> {
     if (isMockMode()) {
       const mockMenus = JSON.parse(localStorage.getItem("mock_menus") || "[]");
       const active = mockMenus.find((m: any) => m.restaurant_id === restaurantId && m.status === "PUBLISHED");
       if (!active) return null;
 
       const mockItems = JSON.parse(localStorage.getItem("mock_menu_items") || "[]");
-      const items = mockItems.filter((i: any) => i.menu_id === active.id);
+      const rawItems = mockItems.filter((i: any) => i.menu_id === active.id).map((i: any) => decodeMenuItemMeta(i));
+      const items = forPublic ? rawItems.filter((i: any) => i.is_active_today !== false) : rawItems;
       return { ...active, items };
     }
     const supabase = createClient();
@@ -220,15 +222,10 @@ export const restaurantService = {
 
     if (itemsError) throw itemsError;
 
-    const formattedItems = (items || []).map((item: any) => ({
-      ...item,
-      is_special: Boolean(
-        item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
-      ),
-      description: (item.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
-    }));
+    const rawFormatted = (items || []).map((item: any) => decodeMenuItemMeta(item));
+    const itemsToReturn = forPublic ? rawFormatted.filter((i: any) => i.is_active_today !== false) : rawFormatted;
 
-    return { ...menu, items: formattedItems as MenuItem[] };
+    return { ...menu, items: itemsToReturn as MenuItem[] };
   },
 
   // 6. OBTENER MENÚS (HISTÓRICO)
@@ -303,13 +300,7 @@ export const restaurantService = {
 
     if (itemsError) throw itemsError;
 
-    const formattedItems = (items || []).map((item: any) => ({
-      ...item,
-      is_special: Boolean(
-        item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
-      ),
-      description: (item.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
-    }));
+    const formattedItems = (items || []).map((item: any) => decodeMenuItemMeta(item));
 
     return { ...menu, items: formattedItems as MenuItem[] };
   },
@@ -333,5 +324,26 @@ export const restaurantService = {
       .eq("id", itemId);
 
     if (error) throw error;
-  }
+  },
+
+  // 10. OBTENER CATÁLOGO DE PLATOS DEL RESTAURANTE (Para activar/desactivar cada día)
+  async getDishesCatalog(restaurantId: string): Promise<MenuItem[]> {
+    try {
+      const active = await this.getActiveMenu(restaurantId, false);
+      if (active && active.items && active.items.length > 0) {
+        return active.items;
+      }
+
+      const menus = await this.getMenusList(restaurantId);
+      if (menus && menus.length > 0) {
+        const latest = await this.getMenuById(menus[0].id);
+        if (latest && latest.items && latest.items.length > 0) {
+          return latest.items;
+        }
+      }
+    } catch (e) {
+      console.warn("Error al obtener catálogo de platos:", e);
+    }
+    return [];
+  },
 };

@@ -19,9 +19,9 @@ import {
   Truck,
   Store,
   CheckCircle2,
-  ChevronRight,
   Loader2,
   FileText,
+  Utensils,
 } from "lucide-react";
 
 export default function CheckoutPage() {
@@ -38,13 +38,13 @@ export default function CheckoutPage() {
   const [isOrderSubmitted, setIsOrderSubmitted] = useState(false);
 
   // Cart
-  const { cart, getSubtotal, clearCart } = useCart(slug);
+  const { cart, syncPriceMode, getSubtotal, clearCart } = useCart(slug);
 
   // Form states (Section 21)
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
-    deliveryType: "DOMICILIO" as "DOMICILIO" | "RECOGER",
+    deliveryType: "DOMICILIO" as "DOMICILIO" | "RECOGER" | "MESA",
     deliveryAddress: "",
     deliveryNotes: "",
     paymentMethod: "EFECTIVO" as "EFECTIVO" | "TRANSFERENCIA",
@@ -62,7 +62,17 @@ export default function CheckoutPage() {
           setError("La recepción de pedidos en línea está temporalmente pausada.");
         }
 
-        // Adjust default delivery type based on restaurant capabilities
+        // Adjust default delivery type based on query or restaurant capabilities
+        if (typeof window !== "undefined") {
+          const urlParams = new URLSearchParams(window.location.search);
+          const mode = urlParams.get("mode");
+          if (mode === "mesa") {
+            setFormData((prev) => ({ ...prev, deliveryType: "MESA" }));
+            syncPriceMode("MESA");
+            return;
+          }
+        }
+
         if (!profile.allows_delivery && profile.allows_pickup) {
           setFormData((prev) => ({ ...prev, deliveryType: "RECOGER" }));
         }
@@ -88,8 +98,9 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDeliverySelect = (type: "DOMICILIO" | "RECOGER") => {
+  const handleDeliverySelect = (type: "DOMICILIO" | "RECOGER" | "MESA") => {
     setFormData((prev) => ({ ...prev, deliveryType: type }));
+    syncPriceMode(type === "MESA" ? "MESA" : "LLEVAR");
   };
 
   const handlePaymentSelect = (method: "EFECTIVO" | "TRANSFERENCIA") => {
@@ -126,14 +137,17 @@ export default function CheckoutPage() {
         deliveryNotes: formData.deliveryNotes || undefined,
         paymentMethod: formData.paymentMethod,
         deliveryFee,
-        items: cart.map((c) => ({
-          menuItemId: c.item.id,
-          name: c.item.name,
-          categoryName: c.item.category_name,
-          quantity: c.quantity,
-          price: Number(c.item.price),
-          notes: c.notes,
-        })),
+        items: cart.map((c) => {
+          const itemPrice = Number(c.selected_price !== undefined ? c.selected_price : c.item.price);
+          return {
+            menuItemId: c.item.id,
+            name: c.item.name,
+            categoryName: c.item.category_name,
+            quantity: c.quantity,
+            price: isNaN(itemPrice) ? 0 : itemPrice,
+            notes: c.notes,
+          };
+        }),
       });
 
       // Mark order as submitted so empty cart listener doesn't kick the user back
@@ -194,19 +208,19 @@ export default function CheckoutPage() {
                 Método de Entrega
               </span>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {restaurant.allows_delivery && (
                   <button
                     type="button"
                     onClick={() => handleDeliverySelect("DOMICILIO")}
-                    className={`p-3.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
+                    className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
                       formData.deliveryType === "DOMICILIO"
                         ? "border-brand-600 bg-brand-50/40 text-brand-700 font-bold"
                         : "border-slate-200 bg-white text-slate-500"
                     }`}
                   >
                     <Truck className="h-5 w-5" />
-                    <span className="text-xs">A Domicilio</span>
+                    <span className="text-[11px]">A Domicilio</span>
                   </button>
                 )}
 
@@ -214,16 +228,29 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => handleDeliverySelect("RECOGER")}
-                    className={`p-3.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
+                    className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
                       formData.deliveryType === "RECOGER"
                         ? "border-brand-600 bg-brand-50/40 text-brand-700 font-bold"
                         : "border-slate-200 bg-white text-slate-500"
                     }`}
                   >
                     <Store className="h-5 w-5" />
-                    <span className="text-xs">Llevar / Recoger</span>
+                    <span className="text-[11px]">Para Llevar</span>
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => handleDeliverySelect("MESA")}
+                  className={`p-3 rounded-xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${
+                    formData.deliveryType === "MESA"
+                      ? "border-brand-600 bg-brand-50/40 text-brand-700 font-bold"
+                      : "border-slate-200 bg-white text-slate-500"
+                  }`}
+                >
+                  <Utensils className="h-5 w-5" />
+                  <span className="text-[11px]">En la Mesa</span>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -259,8 +286,17 @@ export default function CheckoutPage() {
                   label="Dirección de Entrega"
                   name="deliveryAddress"
                   required
-                  placeholder="Ej: Calle 72 # 44-20 Apt 402"
-                  leftIcon={<MapPin className="h-4 w-4" />}
+                  placeholder="Ej: Calle 45 # 12-34, Apto 201"
+                  value={formData.deliveryAddress}
+                  onChange={handleChange}
+                />
+              )}
+
+              {formData.deliveryType === "MESA" && (
+                <Input
+                  label="Número de Mesa (Opcional)"
+                  name="deliveryAddress"
+                  placeholder="Ej: Mesa 4 (o deja vacío)"
                   value={formData.deliveryAddress}
                   onChange={handleChange}
                 />

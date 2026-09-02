@@ -124,6 +124,8 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
   name TEXT NOT NULL,
   description TEXT,
   price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+  price_dinein NUMERIC(10,2),
+  price_takeaway NUMERIC(10,2),
   image_url TEXT,
   is_available BOOLEAN NOT NULL DEFAULT true,
   is_special BOOLEAN NOT NULL DEFAULT false,
@@ -132,8 +134,10 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Migration helper if updating existing database instance:
+-- Migration helpers if updating existing database instance:
 -- ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS is_special BOOLEAN NOT NULL DEFAULT false;
+-- ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS price_dinein NUMERIC(10,2);
+-- ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS price_takeaway NUMERIC(10,2);
 
 CREATE INDEX IF NOT EXISTS idx_menu_items_menu_id ON public.menu_items(menu_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_restaurant_available ON public.menu_items(restaurant_id, is_available);

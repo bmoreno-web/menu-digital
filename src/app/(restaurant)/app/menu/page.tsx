@@ -22,6 +22,7 @@ import {
   X,
   Sparkles,
   Star,
+  Check,
 } from "lucide-react";
 
 interface FormItem {
@@ -30,9 +31,12 @@ interface FormItem {
   name: string;
   description: string;
   price: number;
+  price_dinein?: number;
+  price_takeaway?: number;
   image_url?: string | null;
   is_available: boolean;
   is_special?: boolean;
+  is_active_today?: boolean;
 }
 
 export default function DailyMenuPage() {
@@ -59,8 +63,8 @@ export default function DailyMenuPage() {
         if (session) {
           setRestaurant(session.restaurant);
 
-          // Try to load active menu for today
-          const activeMenu = await restaurantService.getActiveMenu(session.restaurant.id);
+          // Try to load active menu for today (with all dishes)
+          const activeMenu = await restaurantService.getActiveMenu(session.restaurant.id, false);
           if (activeMenu && activeMenu.items && activeMenu.items.length > 0) {
             setMenuId(activeMenu.id);
             setMenuDate(activeMenu.menu_date);
@@ -71,26 +75,51 @@ export default function DailyMenuPage() {
                 id: i.id,
                 category_name: i.category_name || "Platos del Día",
                 name: i.name,
-                description: (i.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
-                price: Number(i.price),
+                description: i.description || "",
+                price: Number(i.price_takeaway || i.price) || 18000,
+                price_dinein: Number(i.price_dinein) || Number(i.price) || 16000,
+                price_takeaway: Number(i.price_takeaway || i.price) || 18000,
                 image_url: i.image_url || null,
-                is_available: i.is_available,
-                is_special: Boolean(i.is_special || (i.description && i.description.startsWith("[ESPECIAL]"))),
+                is_available: i.is_available !== undefined ? i.is_available : true,
+                is_special: Boolean(i.is_special),
+                is_active_today: i.is_active_today !== undefined ? i.is_active_today : true,
               }))
             );
           } else {
-            // Start with 1 ready dish row
-            setMenuItems([
-              {
-                category_name: "Platos del Día",
-                name: "",
-                description: "",
-                price: 18000,
-                image_url: null,
-                is_available: true,
-                is_special: false,
-              },
-            ]);
+            // Load restaurant's master catalog from previous menus
+            const catalog = await restaurantService.getDishesCatalog(session.restaurant.id);
+            if (catalog && catalog.length > 0) {
+              setMenuItems(
+                catalog.map((i: any) => ({
+                  id: i.id,
+                  category_name: i.category_name || "Platos del Día",
+                  name: i.name,
+                  description: i.description || "",
+                  price: Number(i.price_takeaway || i.price) || 18000,
+                  price_dinein: Number(i.price_dinein) || Number(i.price) || 16000,
+                  price_takeaway: Number(i.price_takeaway || i.price) || 18000,
+                  image_url: i.image_url || null,
+                  is_available: true,
+                  is_special: Boolean(i.is_special),
+                  is_active_today: true,
+                }))
+              );
+            } else {
+              setMenuItems([
+                {
+                  category_name: "Platos del Día",
+                  name: "",
+                  description: "",
+                  price: 18000,
+                  price_dinein: 16000,
+                  price_takeaway: 18000,
+                  image_url: null,
+                  is_available: true,
+                  is_special: false,
+                  is_active_today: true,
+                },
+              ]);
+            }
           }
 
           // Fetch historical menus for copying
@@ -107,33 +136,41 @@ export default function DailyMenuPage() {
   }, []);
 
   const handleAddItem = () => {
-    const lastPrice = menuItems.length > 0 ? menuItems[menuItems.length - 1].price : 18000;
+    const lastItem = menuItems.length > 0 ? menuItems[menuItems.length - 1] : null;
+    const lastPriceTakeaway = lastItem ? Number(lastItem.price_takeaway || lastItem.price) || 18000 : 18000;
+    const lastPriceDinein = lastItem ? Number(lastItem.price_dinein) || 16000 : 16000;
+
     setMenuItems((prev) => [
       ...prev,
       {
         category_name: "Platos del Día",
         name: "",
         description: "",
-        price: lastPrice,
+        price: lastPriceTakeaway,
+        price_dinein: lastPriceDinein,
+        price_takeaway: lastPriceTakeaway,
         image_url: null,
         is_available: true,
         is_special: false,
+        is_active_today: true,
       },
     ]);
   };
 
   const handleRemoveItem = (index: number) => {
     if (menuItems.length === 1) {
-      // Just clear the single remaining item
       setMenuItems([
         {
           category_name: "Platos del Día",
           name: "",
           description: "",
           price: 18000,
+          price_dinein: 16000,
+          price_takeaway: 18000,
           image_url: null,
           is_available: true,
           is_special: false,
+          is_active_today: true,
         },
       ]);
       return;
@@ -181,6 +218,15 @@ export default function DailyMenuPage() {
     handleItemChange(index, "is_special", nextVal);
   };
 
+  const handleToggleActiveToday = (index: number) => {
+    const current = menuItems[index].is_active_today !== false;
+    handleItemChange(index, "is_active_today", !current);
+  };
+
+  const handleSetAllActive = (active: boolean) => {
+    setMenuItems((prev) => prev.map((item) => ({ ...item, is_active_today: active })));
+  };
+
   const handleCloneMenu = async (pastMenuId: string) => {
     setIsLoading(true);
     setShowHistoryModal(false);
@@ -192,14 +238,17 @@ export default function DailyMenuPage() {
           pastMenu.items.map((i) => ({
             category_name: "Platos del Día",
             name: i.name,
-            description: (i.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
-            price: Number(i.price),
+            description: i.description || "",
+            price: Number(i.price_takeaway || i.price) || 18000,
+            price_dinein: Number(i.price_dinein) || Number(i.price) || 16000,
+            price_takeaway: Number(i.price_takeaway || i.price) || 18000,
             image_url: i.image_url || null,
             is_available: true,
-            is_special: Boolean(i.is_special || (i.description && i.description.startsWith("[ESPECIAL]"))),
+            is_special: Boolean(i.is_special),
+            is_active_today: true,
           }))
         );
-        setFeedback("Menú copiado. Haz clic en Guardar para publicarlo hoy.");
+        setFeedback("Catálogo de platos cargado con éxito. Ajusta los que ofrecerás hoy.");
       }
     } catch {
       setFeedback("Error al copiar el menú anterior.");
@@ -353,177 +402,277 @@ export default function DailyMenuPage() {
           </CardContent>
         </Card>
 
+        {/* CATALOG SUMMARY & BATCH CONTROLS */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
+          <div className="space-y-0.5">
+            <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+              <span>Catálogo del Restaurante</span>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full">
+                {menuItems.length} platos
+              </span>
+            </span>
+            <p className="text-[11px] text-slate-500">
+              <strong className="text-emerald-700 font-bold">
+                {menuItems.filter((i) => i.is_active_today !== false).length} activos
+              </strong>{" "}
+              para el menú de hoy •{" "}
+              <strong className="text-amber-700 font-bold">
+                {menuItems.filter((i) => i.is_special && i.is_active_today !== false).length} especial(es)
+              </strong>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleSetAllActive(true)}
+              className="text-[11px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+            >
+              Activar Todos
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetAllActive(false)}
+              className="text-[11px] font-bold px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+            >
+              Pausar Todos
+            </button>
+          </div>
+        </div>
+
         {/* LIST OF DISHES */}
         <div className="space-y-3">
-          {menuItems.some((i) => i.is_special) && (
+          {menuItems.some((i) => i.is_special && i.is_active_today !== false) && (
             <div className="flex items-center gap-2.5 p-3.5 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50/60 border border-amber-200/90 rounded-2xl text-amber-900 text-xs font-bold shadow-xs">
               <div className="h-6 w-6 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Sparkles className="h-3.5 w-3.5 fill-white" />
               </div>
               <p className="leading-tight">
                 <strong className="font-black text-amber-950">
-                  {menuItems.filter((i) => i.is_special).length} plato(s) marcado(s) como Especial del Día.
+                  {menuItems.filter((i) => i.is_special && i.is_active_today !== false).length} plato(s) marcado(s) como Especial del Día.
                 </strong>{" "}
                 <span className="text-amber-800 font-medium">Se destacarán en la parte superior del menú público.</span>
               </p>
             </div>
           )}
 
-          {menuItems.map((item, idx) => (
-            <Card
-              key={idx}
-              className={`border transition-all relative overflow-hidden ${
-                item.is_special
-                  ? "bg-gradient-to-br from-amber-50/60 via-white to-amber-50/20 border-amber-300 ring-2 ring-amber-400/60 shadow-md"
-                  : item.is_available
-                  ? "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-                  : "bg-slate-50/70 border-slate-200 opacity-70"
-              }`}
-            >
-              {item.is_special && (
-                <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] uppercase tracking-widest px-4 py-1 flex items-center justify-between shadow-xs">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 fill-amber-950 text-amber-950" />
-                    ⭐ ESPECIAL DEL DÍA DESTACADO
-                  </span>
-                  <span className="text-[9px] font-bold text-amber-900 opacity-90 hidden sm:inline">
-                    Prioridad visual arriba del menú
-                  </span>
-                </div>
-              )}
+          {menuItems.map((item, idx) => {
+            const isActiveToday = item.is_active_today !== false;
 
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
-                  
-                  {/* PHOTO (Max 350x350 WebP) */}
-                  <div className="relative shrink-0 self-center sm:self-auto">
-                    <input
-                      type="file"
-                      id={`photo-input-${idx}`}
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handlePhotoUpload(idx, file);
-                      }}
-                    />
-
-                    {item.image_url ? (
-                      <div className="relative group">
-                        <img
-                          src={item.image_url}
-                          alt={item.name || "Foto del plato"}
-                          className="h-16 w-16 sm:h-18 sm:w-18 rounded-xl object-cover border border-slate-200 shadow-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePhoto(idx)}
-                          className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-rose-600 text-white flex items-center justify-center shadow hover:bg-rose-700"
-                          title="Quitar foto"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <label
-                        htmlFor={`photo-input-${idx}`}
-                        className="h-16 w-16 sm:h-18 sm:w-18 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex flex-col items-center justify-center cursor-pointer transition-all text-slate-400 hover:text-brand-600 group"
-                        title="Subir foto (Optimizada a 350x350 WebP)"
-                      >
-                        {uploadingIdx === idx ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
-                        ) : (
-                          <>
-                            <Camera className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                            <span className="text-[9px] font-extrabold uppercase mt-1">Foto</span>
-                          </>
-                        )}
-                      </label>
-                    )}
+            return (
+              <Card
+                key={idx}
+                className={`border transition-all relative overflow-hidden ${
+                  !isActiveToday
+                    ? "bg-slate-50/80 border-slate-200 opacity-60 hover:opacity-90"
+                    : item.is_special
+                    ? "bg-gradient-to-br from-amber-50/60 via-white to-amber-50/20 border-amber-300 ring-2 ring-amber-400/60 shadow-md"
+                    : item.is_available
+                    ? "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                    : "bg-slate-50/70 border-slate-200 opacity-70"
+                }`}
+              >
+                {!isActiveToday ? (
+                  <div className="bg-slate-200/90 text-slate-700 font-black text-[10px] uppercase tracking-wider px-4 py-1 flex items-center justify-between">
+                    <span>⏸️ INACTIVO HOY (Guardado en catálogo, no visible para clientes)</span>
+                    <span className="text-[9px] font-bold text-slate-500">Toca &quot;Ofrecer Hoy&quot; para activarlo</span>
                   </div>
+                ) : item.is_special ? (
+                  <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] uppercase tracking-widest px-4 py-1 flex items-center justify-between shadow-xs">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 fill-amber-950 text-amber-950" />
+                      ⭐ ESPECIAL DEL DÍA DESTACADO
+                    </span>
+                    <span className="text-[9px] font-bold text-amber-900 opacity-90 hidden sm:inline">
+                      Prioridad visual arriba del menú
+                    </span>
+                  </div>
+                ) : null}
 
-                  {/* DISH NAME, DETAILS & PRICE */}
-                  <div className="flex-1 w-full space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div className="sm:col-span-2">
-                        <input
-                          type="text"
-                          placeholder="Nombre del plato (ej: Pechuga a la Plancha)"
-                          value={item.name}
-                          onChange={(e) => handleItemChange(idx, "name", e.target.value)}
-                          className="w-full h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-900"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="number"
-                          placeholder="Precio ($)"
-                          value={item.price}
-                          onChange={(e) => handleItemChange(idx, "price", e.target.value)}
-                          className="w-full h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-brand-700"
-                        />
-                      </div>
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                    
+                    {/* PHOTO (Max 350x350 WebP) */}
+                    <div className="relative shrink-0 self-center sm:self-auto">
+                      <input
+                        type="file"
+                        id={`photo-input-${idx}`}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handlePhotoUpload(idx, file);
+                        }}
+                      />
+
+                      {item.image_url ? (
+                        <div className="relative group">
+                          <img
+                            src={item.image_url}
+                            alt={item.name || "Foto del plato"}
+                            className="h-16 w-16 sm:h-18 sm:w-18 rounded-xl object-cover border border-slate-200 shadow-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePhoto(idx)}
+                            className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-rose-600 text-white flex items-center justify-center shadow hover:bg-rose-700"
+                            title="Quitar foto"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor={`photo-input-${idx}`}
+                          className="h-16 w-16 sm:h-18 sm:w-18 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex flex-col items-center justify-center cursor-pointer transition-all text-slate-400 hover:text-brand-600 group"
+                          title="Subir foto (Optimizada a 350x350 WebP)"
+                        >
+                          {uploadingIdx === idx ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
+                          ) : (
+                            <>
+                              <Camera className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                              <span className="text-[9px] font-extrabold uppercase mt-1">Foto</span>
+                            </>
+                          )}
+                        </label>
+                      )}
                     </div>
 
-                    <input
-                      type="text"
-                      placeholder="Detalles / Acompañamiento (ej: Arroz de coco, ensalada rusa y patacón)"
-                      value={item.description}
-                      onChange={(e) => handleItemChange(idx, "description", e.target.value)}
-                      className="w-full h-8.5 px-3 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-600"
-                    />
-                  </div>
+                    {/* DISH NAME, DUAL PRICES & DETAILS */}
+                    <div className="flex-1 w-full space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Nombre del plato (ej: Pechuga a la Plancha)"
+                        value={item.name}
+                        onChange={(e) => handleItemChange(idx, "name", e.target.value)}
+                        className="w-full h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-900"
+                      />
 
-                  {/* AVAILABILITY, SPECIAL & DELETE */}
-                  <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleSpecial(idx)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all border ${
-                        item.is_special
-                          ? "bg-amber-500 text-white border-amber-600 shadow-sm shadow-amber-500/30 hover:bg-amber-600"
-                          : "bg-white border-slate-200 text-slate-600 hover:border-amber-300 hover:bg-amber-50/70 hover:text-amber-700"
-                      }`}
-                      title={item.is_special ? "Quitar de Especial del Día" : "Marcar como Especial del Día"}
-                    >
-                      <Star className={`h-3.5 w-3.5 ${item.is_special ? "fill-white text-white" : "text-amber-500"}`} />
-                      <span>{item.is_special ? "Especial" : "Marcar Especial"}</span>
-                    </button>
+                      {/* DUAL PRICES (EN MESA vs PARA LLEVAR) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1">
+                            🍽️ Precio en Mesa ($)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="En Mesa (ej: 16000)"
+                            value={item.price_dinein !== undefined ? item.price_dinein : item.price}
+                            onChange={(e) => handleItemChange(idx, "price_dinein", Number(e.target.value))}
+                            className="w-full h-9 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-800"
+                          />
+                        </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleToggleAvailable(idx, item.id)}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                        item.is_available
-                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          : "bg-rose-50 text-rose-700 hover:bg-rose-100"
-                      }`}
-                    >
-                      {item.is_available ? (
-                        <>
-                          <CheckCircle className="h-3.5 w-3.5" /> Disponible
-                        </>
-                      ) : (
-                        <>
-                          <AlertCircle className="h-3.5 w-3.5" /> Agotado
-                        </>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                            🛵 Precio Para Llevar ($)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="Para Llevar (ej: 18000)"
+                            value={item.price_takeaway !== undefined ? item.price_takeaway : item.price}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              handleItemChange(idx, "price_takeaway", val);
+                              handleItemChange(idx, "price", val);
+                            }}
+                            className="w-full h-9 px-3 text-xs font-bold bg-white border border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-600 text-emerald-800 bg-emerald-50/20"
+                          />
+                        </div>
+                      </div>
+
+                      <input
+                        type="text"
+                        placeholder="Detalles / Acompañamiento (ej: Arroz de coco, ensalada rusa y patacón)"
+                        value={item.description}
+                        onChange={(e) => handleItemChange(idx, "description", e.target.value)}
+                        className="w-full h-8.5 px-3 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-600"
+                      />
+                    </div>
+
+                    {/* ACTIONS: OFRECER HOY, ESPECIAL, DISPONIBLE, ELIMINAR */}
+                    <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
+                      
+                      {/* TOGGLE ACTIVE TODAY */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActiveToday(idx)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all border shadow-xs ${
+                          isActiveToday
+                            ? "bg-emerald-600 border-emerald-700 text-white hover:bg-emerald-700"
+                            : "bg-slate-200 border-slate-300 text-slate-700 hover:bg-slate-300"
+                        }`}
+                        title={isActiveToday ? "Desactivar de hoy (Permanecerá en catálogo)" : "Activar para ofrecer hoy"}
+                      >
+                        {isActiveToday ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 stroke-[3]" />
+                            <span>Ofrecer Hoy</span>
+                          </>
+                        ) : (
+                          <>
+                            <X className="h-3.5 w-3.5" />
+                            <span>Pausado Hoy</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* TOGGLE SPECIAL BUTTON */}
+                      {isActiveToday && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSpecial(idx)}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all border ${
+                            item.is_special
+                              ? "bg-amber-500 text-white border-amber-600 shadow-sm shadow-amber-500/30 hover:bg-amber-600"
+                              : "bg-white border-slate-200 text-slate-600 hover:border-amber-300 hover:bg-amber-50/70 hover:text-amber-700"
+                          }`}
+                          title={item.is_special ? "Quitar de Especial del Día" : "Marcar como Especial del Día"}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${item.is_special ? "fill-white text-white" : "text-amber-500"}`} />
+                          <span>{item.is_special ? "Especial" : "Especial"}</span>
+                        </button>
                       )}
-                    </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(idx)}
-                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                      title="Eliminar plato"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      {/* AVAILABILITY BUTTON */}
+                      {isActiveToday && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAvailable(idx, item.id)}
+                          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                            item.is_available
+                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                              : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                          }`}
+                        >
+                          {item.is_available ? (
+                            <>
+                              <CheckCircle className="h-3.5 w-3.5" /> Disponible
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="h-3.5 w-3.5" /> Agotado
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(idx)}
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Eliminar plato del catálogo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
                   </div>
-
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* ADD DISH BUTTON */}
@@ -533,8 +682,8 @@ export default function DailyMenuPage() {
             onClick={handleAddItem}
             className="w-full py-3.5 border-2 border-dashed border-slate-200 hover:border-brand-500 hover:bg-brand-50/40 rounded-2xl flex items-center justify-center gap-2 text-xs font-black text-brand-700 transition-all active:scale-[0.99]"
           >
-            <Plus className="h-4 w-4 stroke-[3]" />
-            <span>Añadir Otro Plato</span>
+            <Plus className="h-4 w-4" />
+            <span>Agregar Nuevo Plato al Catálogo</span>
           </button>
         </div>
 

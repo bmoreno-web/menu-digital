@@ -60,8 +60,11 @@ export interface MenuItem {
   name: string;
   description?: string;
   price: number;
+  price_dinein?: number;
+  price_takeaway?: number;
   image_url?: string | null;
   is_available: boolean;
+  is_active_today?: boolean;
   is_special?: boolean;
   display_order: number;
   created_at: string;
@@ -127,4 +130,6 @@ export interface CartItem {
   item: MenuItem;
   quantity: number;
   notes?: string;
+  price_mode?: 'MESA' | 'LLEVAR';
+  selected_price?: number;
 }
