@@ -42,6 +42,8 @@ export default function RestaurantConfiguration() {
   const [trialStatus, setTrialStatus] = useState<any>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [selectedTypeOption, setSelectedTypeOption] = useState<string>("Restaurante Ejecutivo");
+  const [customType, setCustomType] = useState<string>("");
 
   // Security Credentials state
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -64,6 +66,24 @@ export default function RestaurantConfiguration() {
         
         const status = await subscriptionService.checkTrialStatus(session.restaurant.id);
         setTrialStatus(status);
+
+        // Initialize business type
+        const currentType = session.restaurant.restaurant_type || "Restaurante Ejecutivo";
+        const matched = SITE_CONFIG.restaurantTypes.find(
+          (t) =>
+            t.id !== "otro" &&
+            (t.label.toLowerCase() === currentType.toLowerCase() ||
+              t.id.toLowerCase() === currentType.toLowerCase())
+        );
+        if (matched) {
+          setSelectedTypeOption(matched.label);
+          setCustomType("");
+        } else {
+          setSelectedTypeOption("otro");
+          setCustomType(
+            currentType === "otro" || currentType === "Otro Tipo de Negocio" ? "" : currentType
+          );
+        }
         
         // Generate Permanent QR Code
         const publicUrl = `${window.location.origin}/r/${session.restaurant.slug}`;
@@ -134,6 +154,25 @@ export default function RestaurantConfiguration() {
     setFeedback("Logo removido. Haz clic en 'Guardar Ajustes' para aplicar el cambio.");
   };
 
+  const handleTypeOptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedTypeOption(val);
+    if (val !== "otro") {
+      setRestaurant((prev: any) => ({ ...prev, restaurant_type: val }));
+    } else {
+      setRestaurant((prev: any) => ({
+        ...prev,
+        restaurant_type: customType.trim() || "Otro Tipo de Negocio",
+      }));
+    }
+  };
+
+  const handleCustomTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setCustomType(val);
+    setRestaurant((prev: any) => ({ ...prev, restaurant_type: val }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -155,6 +194,11 @@ export default function RestaurantConfiguration() {
     setFeedback(null);
 
     try {
+      const finalType =
+        selectedTypeOption === "otro"
+          ? customType.trim() || targetRestaurant.restaurant_type || "Restaurante"
+          : targetRestaurant.restaurant_type || selectedTypeOption;
+
       const updated = await restaurantService.updateRestaurant(targetRestaurant.id, {
         name: targetRestaurant.name,
         opening_hours: targetRestaurant.opening_hours,
@@ -166,7 +210,7 @@ export default function RestaurantConfiguration() {
         delivery_fee: Number(targetRestaurant.delivery_fee) || 0,
         description: targetRestaurant.description,
         logo_url: targetRestaurant.logo_url,
-        restaurant_type: targetRestaurant.restaurant_type || "Restaurante Ejecutivo",
+        restaurant_type: finalType,
       });
 
       setRestaurant(updated);
@@ -413,24 +457,37 @@ export default function RestaurantConfiguration() {
                 leftIcon={<Store className="h-4 w-4" />}
               />
 
-              <div className="space-y-1.5 text-left">
+              <div className="space-y-2 text-left">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Tipo de Establecimiento
                 </label>
                 <select
-                  name="restaurant_type"
-                  value={restaurant.restaurant_type || "Restaurante Ejecutivo"}
-                  onChange={handleChange}
+                  value={selectedTypeOption}
+                  onChange={handleTypeOptionChange}
                   className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10"
                 >
                   {SITE_CONFIG.restaurantTypes.map((t) => (
-                    <option key={t.id} value={t.label}>
+                    <option key={t.id} value={t.id === "otro" ? "otro" : t.label}>
                       {t.label}
                     </option>
                   ))}
                 </select>
+
+                {selectedTypeOption === "otro" && (
+                  <div className="pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <Input
+                      label="Escribe tu Tipo de Negocio Personalizado"
+                      placeholder="Ej: Pizzería Artesanal, Asadero de Pollos, Heladería, Bar Café..."
+                      value={customType}
+                      onChange={handleCustomTypeChange}
+                      required
+                      helperText="Este nombre aparecerá directamente arriba del nombre en tu menú público."
+                    />
+                  </div>
+                )}
+
                 <p className="text-[11px] text-slate-400">
-                  Este título aparecerá en la parte superior de tu menú público para tus clientes (ej: &quot;Restaurante Ejecutivo&quot;, &quot;Cafetería&quot;).
+                  Este título aparecerá en la parte superior de tu menú público para tus clientes (ej: &quot;Restaurante Ejecutivo&quot;, &quot;Cafetería&quot;, &quot;Pizzería&quot;).
                 </p>
               </div>
 

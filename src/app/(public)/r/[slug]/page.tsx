@@ -98,7 +98,9 @@ export default function PublicRestaurantPage() {
 
   // Helper to format restaurant type elegantly
   const formatRestaurantType = (type?: string): string => {
-    if (!type) return "Restaurante";
+    if (!type || !type.trim() || type.toLowerCase() === "otro" || type.toLowerCase() === "otro tipo de negocio") {
+      return "Restaurante";
+    }
     const lower = type.toLowerCase().trim();
     if (lower === "ejecutivo" || lower.includes("ejecutivo")) return "Restaurante Ejecutivo";
     if (lower === "corrientazo" || lower.includes("casero")) return "Restaurante • Almuerzo Casero";
@@ -107,7 +109,7 @@ export default function PublicRestaurantPage() {
     if (lower === "comidas_rapidas" || lower.includes("rapidas")) return "Comidas Rápidas";
     if (lower === "gourmet") return "Restaurante Gourmet";
     if (lower === "a la carta" || lower === "restaurante") return "Restaurante a la Carta";
-    return type.charAt(0).toUpperCase() + type.slice(1);
+    return type.trim();
   };
 
   // Real distinct categories from items
