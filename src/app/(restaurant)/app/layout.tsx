@@ -25,6 +25,7 @@ import {
   X,
   Utensils,
 } from "lucide-react";
+import { OrderNotificationListener } from "@/components/restaurant/OrderNotificationListener";
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -65,6 +66,9 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
   return (
     <AuthGuard>
+      {/* REALTIME SOUND & PUSH NOTIFICATION LISTENER FOR NEW ORDERS */}
+      <OrderNotificationListener restaurantId={restaurant?.id} restaurantName={restaurant?.name} />
+
       {/* SUPER ADMIN ACTIVE BANNER */}
       {user?.role === "SUPER_ADMIN" && (
         <div className="bg-amber-400 text-slate-950 px-4 py-2 text-xs font-black flex flex-wrap items-center justify-between shadow-sm border-b border-amber-500/40 z-40 sticky top-0">
