@@ -54,7 +54,8 @@ export default function RestaurantConfiguration() {
       if (session) {
         setRestaurant(session.restaurant);
         setCurrentUser(session.user);
-        setSecurityEmail(session.user?.email || "");
+        const initialUser = (session.user?.email || "").replace(/@menu-digital\.com$/i, "");
+        setSecurityEmail(initialUser);
         
         const status = await subscriptionService.checkTrialStatus(session.restaurant.id);
         setTrialStatus(status);
@@ -468,12 +469,13 @@ export default function RestaurantConfiguration() {
                 <Input
                   label="Correo o Usuario de Acceso"
                   name="securityEmail"
-                  type="email"
+                  type="text"
                   required
+                  placeholder="ej: sabordelacosta o micorreo@gmail.com"
                   value={securityEmail}
                   onChange={(e) => setSecurityEmail(e.target.value)}
                   leftIcon={<Mail className="h-4 w-4" />}
-                  helperText="Este es el correo que usarás para iniciar sesión en el panel."
+                  helperText="Puedes ingresar un nombre de usuario (ej: sabordelacosta) o un correo electrónico completo."
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

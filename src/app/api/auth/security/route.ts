@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
     };
 
     if (email && typeof email === "string" && email.trim().length > 0) {
-      const normalizedEmail = email.trim().toLowerCase();
+      const trimmed = email.trim().toLowerCase();
+      const normalizedEmail = trimmed.includes("@")
+        ? trimmed
+        : `${trimmed}@menu-digital.com`;
       authUpdates.email = normalizedEmail;
       authUpdates.email_confirm = true;
       profileUpdates.email = normalizedEmail;
