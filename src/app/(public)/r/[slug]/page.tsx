@@ -176,9 +176,17 @@ export default function PublicRestaurantPage() {
               <p className="text-xs text-slate-300 max-w-xs">{restaurant.description}</p>
             </div>
             
-            <div className="h-14 w-14 rounded-2xl bg-brand-600 flex items-center justify-center font-black text-xl text-white shadow-lg shrink-0">
-              {restaurant.name.slice(0, 2).toUpperCase()}
-            </div>
+            {restaurant.logo_url ? (
+              <img
+                src={restaurant.logo_url}
+                alt={restaurant.name}
+                className="h-14 w-14 rounded-2xl object-cover border-2 border-white/20 shadow-lg shrink-0 bg-white"
+              />
+            ) : (
+              <div className="h-14 w-14 rounded-2xl bg-brand-600 flex items-center justify-center font-black text-xl text-white shadow-lg shrink-0">
+                {restaurant.name.slice(0, 2).toUpperCase()}
+              </div>
+            )}
           </div>
 
           {/* Details list with Close button to the right */}

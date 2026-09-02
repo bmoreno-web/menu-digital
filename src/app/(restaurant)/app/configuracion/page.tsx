@@ -25,9 +25,13 @@ import {
   Lock,
   Mail,
   KeyRound,
+  Camera,
+  Upload,
+  X,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { subscriptionService } from "@/services/subscriptionService";
+import { optimizeDishImage } from "@/lib/imageOptimizer";
 
 export default function RestaurantConfiguration() {
   const [restaurant, setRestaurant] = useState<any>(null);
@@ -37,6 +41,7 @@ export default function RestaurantConfiguration() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [trialStatus, setTrialStatus] = useState<any>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Security Credentials state
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -106,6 +111,27 @@ export default function RestaurantConfiguration() {
     }));
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const optimizedLogo = await optimizeDishImage(file, 300, 0.85);
+      setRestaurant((prev: any) => ({ ...prev, logo_url: optimizedLogo }));
+      setFeedback("Logo cargado con éxito. Haz clic en 'Guardar Ajustes' para guardar los cambios.");
+    } catch (err: any) {
+      setFeedback(err?.message || "Error al procesar la imagen del logo.");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setRestaurant((prev: any) => ({ ...prev, logo_url: null }));
+    setFeedback("Logo removido. Haz clic en 'Guardar Ajustes' para aplicar el cambio.");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -137,6 +163,7 @@ export default function RestaurantConfiguration() {
         allows_pickup: targetRestaurant.allows_pickup,
         delivery_fee: Number(targetRestaurant.delivery_fee) || 0,
         description: targetRestaurant.description,
+        logo_url: targetRestaurant.logo_url,
       });
 
       setRestaurant(updated);
@@ -311,7 +338,69 @@ export default function RestaurantConfiguration() {
               <CardTitle className="text-sm uppercase tracking-wider text-slate-900">Perfil del Restaurante</CardTitle>
               <CardDescription>Esta información es pública para tus clientes.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
+              {/* LOGO UPLOADER */}
+              <div className="space-y-2 pb-4 border-b border-slate-100">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Logo del Restaurante
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative group shrink-0">
+                    {restaurant.logo_url ? (
+                      <div className="relative">
+                        <img
+                          src={restaurant.logo_url}
+                          alt={restaurant.name}
+                          className="h-20 w-20 rounded-2xl object-cover border-2 border-brand-500/40 shadow-sm bg-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveLogo}
+                          className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full bg-rose-600 text-white flex items-center justify-center shadow hover:bg-rose-700 transition-colors"
+                          title="Quitar logo"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400">
+                        <Camera className="h-6 w-6 mb-1 text-slate-400" />
+                        <span className="text-[9px] font-black uppercase">Sin Logo</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      id="restaurant-logo-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoUpload}
+                    />
+                    <label
+                      htmlFor="restaurant-logo-upload"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
+                    >
+                      {isUploadingLogo ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
+                          <span>Procesando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 text-brand-600" />
+                          <span>{restaurant.logo_url ? "Cambiar Logo" : "Subir Logo"}</span>
+                        </>
+                      )}
+                    </label>
+                    <p className="text-[11px] text-slate-500 leading-snug">
+                      Formato recomendado: Cuadrado (JPG, PNG o WebP). Se optimiza automáticamente a tamaño ligero.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Input
                 label="Nombre del Restaurante"
                 name="name"

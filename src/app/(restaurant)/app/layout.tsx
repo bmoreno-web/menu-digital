@@ -130,8 +130,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
           {restaurant && (
             <div className="p-4 border-b border-slate-100 bg-slate-50/50">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center font-bold text-sm">
-                  {restaurant.name.slice(0, 2).toUpperCase()}
+                <div className="h-10 w-10 rounded-xl bg-brand-100 text-brand-800 flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
+                  {restaurant.logo_url ? (
+                    <img src={restaurant.logo_url} alt={restaurant.name} className="h-full w-full object-cover" />
+                  ) : (
+                    restaurant.name.slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-xs font-bold text-slate-950 truncate">{restaurant.name}</h4>
@@ -202,8 +206,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
               <span className="text-xs font-black">Menú</span>
             </button>
             <div className="flex items-center gap-1.5 min-w-0">
-              <div className="h-7 w-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
-                <UtensilsCrossed className="h-3.5 w-3.5" />
+              <div className="h-7 w-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 overflow-hidden">
+                {restaurant?.logo_url ? (
+                  <img src={restaurant.logo_url} alt={restaurant.name} className="h-full w-full object-cover" />
+                ) : (
+                  <UtensilsCrossed className="h-3.5 w-3.5" />
+                )}
               </div>
               {restaurant && (
                 <span className="font-extrabold text-xs text-slate-900 truncate max-w-[120px]">
@@ -271,8 +279,12 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
             <div className="relative w-72 max-w-[80vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                    <UtensilsCrossed className="h-4 w-4" />
+                  <div className="h-8 w-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden shrink-0">
+                    {restaurant?.logo_url ? (
+                      <img src={restaurant.logo_url} alt={restaurant.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <UtensilsCrossed className="h-4 w-4" />
+                    )}
                   </div>
                   <div>
                     <h3 className="text-xs font-black text-slate-900 truncate max-w-[150px]">
