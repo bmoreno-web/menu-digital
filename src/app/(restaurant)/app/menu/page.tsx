@@ -48,11 +48,9 @@ export default function DailyMenuPage() {
   const [menuTitle, setMenuTitle] = useState("Menú del Día");
   const [menuStatus, setMenuStatus] = useState<"DRAFT" | "PUBLISHED">("PUBLISHED");
   const [menuItems, setMenuItems] = useState<FormItem[]>([]);
-  const [pastMenus, setPastMenus] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -123,10 +121,6 @@ export default function DailyMenuPage() {
               ]);
             }
           }
-
-          // Fetch historical menus for copying
-          const history = await restaurantService.getMenusList(session.restaurant.id);
-          setPastMenus(history);
         }
       } catch (err) {
         console.error("Error al cargar menú:", err);
@@ -251,34 +245,21 @@ export default function DailyMenuPage() {
     setMenuItems((prev) => prev.map((item) => ({ ...item, is_active_today: active })));
   };
 
-  const handleCloneMenu = async (pastMenuId: string) => {
-    setIsLoading(true);
-    setShowHistoryModal(false);
-    try {
-      const pastMenu = await restaurantService.getMenuById(pastMenuId);
-      if (pastMenu && pastMenu.items && pastMenu.items.length > 0) {
-        setMenuTitle(pastMenu.title);
-        setMenuItems(
-          pastMenu.items.map((i) => ({
-            category_name: "Platos del Día",
-            name: i.name,
-            description: i.description || "",
-            price: Number(i.price_takeaway || i.price) || 18000,
-            price_dinein: Number(i.price_dinein) || Number(i.price) || 16000,
-            price_takeaway: Number(i.price_takeaway || i.price) || 18000,
-            image_url: i.image_url || null,
-            is_available: true,
-            is_special: Boolean(i.is_special),
-            is_active_today: true,
-          }))
-        );
-        setFeedback("Catálogo de platos cargado con éxito. Ajusta los que ofrecerás hoy.");
-      }
-    } catch {
-      setFeedback("Error al copiar el menú anterior.");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDuplicateItem = (index: number) => {
+    const itemToClone = menuItems[index];
+    if (!itemToClone) return;
+
+    const cloned: FormItem = {
+      ...itemToClone,
+      id: undefined, // Create as new dish in database
+      name: itemToClone.name ? `${itemToClone.name} (Copia)` : "Nuevo Plato",
+      is_active_today: true,
+    };
+
+    const updated = [...menuItems];
+    updated.splice(index + 1, 0, cloned);
+    setMenuItems(updated);
+    setFeedback(`Plato "${itemToClone.name || "Nuevo"}" duplicado con éxito.`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -319,9 +300,6 @@ export default function DailyMenuPage() {
       setMenuId(saved.id);
       setMenuItems(validItems);
       setFeedback("¡Menú guardado y publicado con éxito!");
-
-      const history = await restaurantService.getMenusList(targetRestaurantId);
-      setPastMenus(history);
     } catch (err: any) {
       console.error("Error saving menu:", err);
       setFeedback(err?.message || "No se pudo guardar el menú.");
@@ -357,19 +335,6 @@ export default function DailyMenuPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {pastMenus.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowHistoryModal(true)}
-              className="gap-1.5 font-bold"
-            >
-              <Copy className="h-3.5 w-3.5" />
-              <span>Copiar Anterior</span>
-            </Button>
-          )}
-
           <Link href={`/r/${restaurant?.slug}`} target="_blank">
             <Button type="button" variant="outline" size="sm" className="gap-1.5 font-bold">
               <Eye className="h-3.5 w-3.5" />
@@ -586,6 +551,17 @@ export default function DailyMenuPage() {
                         </button>
                       )}
 
+                      {/* DUPLICATE BUTTON */}
+                      <button
+                        type="button"
+                        onClick={() => handleDuplicateItem(idx)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 active:scale-95 shadow-xs"
+                        title="Duplicar este plato para crear uno similar"
+                      >
+                        <Copy className="h-3 w-3 text-slate-500" />
+                        <span>Duplicar</span>
+                      </button>
+
                       {/* AVAILABILITY */}
                       {isActiveToday && (
                         <button
@@ -750,51 +726,6 @@ export default function DailyMenuPage() {
         </div>
 
       </form>
-
-      {/* CLONING HISTORY MODAL */}
-      {showHistoryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 z-10 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Copiar Menú Anterior</h3>
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="text-xs font-bold text-slate-400 hover:text-slate-700"
-              >
-                Cerrar
-              </button>
-            </div>
-            <div className="p-5 max-h-[60vh] overflow-y-auto space-y-3">
-              {pastMenus.length === 0 ? (
-                <p className="text-center text-xs text-slate-400 py-6">No hay menús registrados anteriormente.</p>
-              ) : (
-                pastMenus.map((menu) => (
-                  <div
-                    key={menu.id}
-                    className="p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-between gap-3"
-                  >
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">{menu.title}</span>
-                      <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                        <Calendar className="h-3 w-3" /> {menu.menu_date}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCloneMenu(menu.id)}
-                      className="font-bold text-xs"
-                    >
-                      Copiar
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
