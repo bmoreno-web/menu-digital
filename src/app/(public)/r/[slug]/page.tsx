@@ -95,15 +95,12 @@ export default function PublicRestaurantPage() {
   const isItemSpecial = (item: any) =>
     Boolean(item.is_special || (item.description && item.description.startsWith("[ESPECIAL]")));
 
-  // Categories list (excludes categories that only contain specials)
-  const categories = ["Todos"];
-  if (menu && menu.items) {
-    menu.items.forEach((item: any) => {
-      if (!categories.includes(item.category_name)) {
-        categories.push(item.category_name);
-      }
-    });
-  }
+  // Real distinct categories from items
+  const itemCategories: string[] = menu && menu.items
+    ? Array.from(new Set<string>(menu.items.map((i: any) => (i.category_name as string) || "Platos del Día")))
+    : [];
+  const showCategoryFilters = itemCategories.length > 1;
+  const categories: string[] = showCategoryFilters ? ["Todos", ...itemCategories] : [];
 
   const specialItems = menu && menu.items
     ? menu.items.filter((i: any) => isItemSpecial(i))
@@ -113,7 +110,8 @@ export default function PublicRestaurantPage() {
   const filteredItems = menu && menu.items
     ? menu.items.filter(
         (i: any) =>
-          !isItemSpecial(i) && (activeCategory === "Todos" || i.category_name === activeCategory)
+          !isItemSpecial(i) &&
+          (!showCategoryFilters || activeCategory === "Todos" || i.category_name === activeCategory)
       )
     : [];
 
@@ -389,8 +387,8 @@ export default function PublicRestaurantPage() {
           </div>
         )}
 
-        {/* Categories filters */}
-        {menu && categories.length > 1 && (
+        {/* Categories filters - only shown if there are 2 or more distinct categories */}
+        {menu && showCategoryFilters && (
           <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
             {categories.map((cat) => (
               <button
