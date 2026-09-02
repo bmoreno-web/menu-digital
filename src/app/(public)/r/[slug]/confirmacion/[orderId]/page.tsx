@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { restaurantService } from "@/services/restaurantService";
 import { orderService } from "@/services/orderService";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, cleanWhatsAppPhone } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -135,7 +135,7 @@ export default function OrderConfirmationPage() {
 
   const whatsappMessage = `*¡Hola ${restaurant.name}!* Acabo de realizar el *Pedido #${order.order_number}* a través del Menú Digital:\n\n👤 *Cliente:* ${order.customer_name}\n📱 *Teléfono:* ${order.customer_phone}\n🛵 *Tipo de Entrega:* ${order.delivery_type === "DOMICILIO" ? "Domicilio" : "Para Recoger"}${order.delivery_address ? `\n📍 *Dirección:* ${order.delivery_address}` : ""}${order.delivery_notes ? `\n📝 *Notas:* ${order.delivery_notes}` : ""}\n\n📋 *Detalle del Pedido:*\n${itemsText}\n\n💵 *Total:* ${formatCurrency(order.total_amount)}\n💳 *Método de Pago:* ${order.payment_method}\n\n¿Me confirman recibido por favor? ¡Muchas gracias!`;
 
-  const whatsappUrl = `https://wa.me/${restaurant.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/${cleanWhatsAppPhone(restaurant.whatsapp)}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-16 selection:bg-brand-500 selection:text-white">

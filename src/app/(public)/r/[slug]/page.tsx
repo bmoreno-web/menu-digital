@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { restaurantService } from "@/services/restaurantService";
 import { subscriptionService } from "@/services/subscriptionService";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, cleanWhatsAppPhone } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -240,7 +240,7 @@ export default function PublicRestaurantPage() {
           {/* Action pills (Section 18) */}
           <div className="flex gap-2 pt-2">
             <a
-              href={`https://wa.me/${restaurant.whatsapp}`}
+              href={`https://wa.me/${cleanWhatsAppPhone(restaurant.whatsapp)}`}
               target="_blank"
               className="flex-1 inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition-colors"
             >

@@ -61,3 +61,38 @@ export function slugify(text: string): string {
     .replace(/[^\w-]+/g, "")
     .replace(/--+/g, "-");
 }
+
+/**
+ * Cleans and formats phone numbers for WhatsApp links (wa.me)
+ * - Automatically prepends 57 (Colombia) if 10-digit mobile number is provided (e.g. 3001234567 -> 573001234567)
+ * - Strips all non-digit characters (+, spaces, hyphens, parentheses)
+ * - Preserves international country codes if already specified
+ */
+export function cleanWhatsAppPhone(phone?: string | null, defaultCountryCode: string = "57"): string {
+  if (!phone) return "";
+  const digits = String(phone).replace(/\D/g, "");
+  if (!digits) return "";
+
+  // If already starts with country code (e.g. 573001234567)
+  if (digits.startsWith(defaultCountryCode) && digits.length >= 12) {
+    return digits;
+  }
+
+  // If 10-digit mobile number (e.g. 3001234567)
+  if (digits.length === 10) {
+    return `${defaultCountryCode}${digits}`;
+  }
+
+  // If starts with 00 prefix (e.g. 0057...)
+  if (digits.startsWith("00")) {
+    return digits.slice(2);
+  }
+
+  // If short number <= 10 digits
+  if (digits.length <= 10) {
+    return `${defaultCountryCode}${digits}`;
+  }
+
+  return digits;
+}
+

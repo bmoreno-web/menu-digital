@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { authService } from "@/services/authService";
 import { orderService } from "@/services/orderService";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, cleanWhatsAppPhone } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -166,7 +166,7 @@ export default function CustomersDirectoryPage() {
                       <Phone className="h-4 w-4" />
                     </a>
                     <a
-                      href={`https://wa.me/${customer.phone.replace(/\+/g, "")}`}
+                      href={`https://wa.me/${cleanWhatsAppPhone(customer.phone)}`}
                       target="_blank"
                       className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors"
                       title="WhatsApp"

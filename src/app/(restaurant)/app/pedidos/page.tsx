@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { authService } from "@/services/authService";
 import { orderService } from "@/services/orderService";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, cleanWhatsAppPhone } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -107,7 +107,7 @@ export default function OrdersManagementPage() {
     else if (order.status === "EN_PREPARACION") msg += `Tu pedido #${order.order_number} está en preparación en nuestra cocina.`;
     else if (order.status === "LISTO") msg += `Tu pedido #${order.order_number} está listo. ${order.delivery_type === "DOMICILIO" ? "Va en camino a tu dirección." : "Puedes pasar a retirarlo."}`;
     else if (order.status === "ENTREGADO") msg += `Tu pedido #${order.order_number} ha sido entregado. ¡Gracias por tu compra!`;
-    return `https://wa.me/${order.customer_phone.replace(/\+/g, "")}?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${cleanWhatsAppPhone(order.customer_phone)}?text=${encodeURIComponent(msg)}`;
   };
 
   if (isLoading) {

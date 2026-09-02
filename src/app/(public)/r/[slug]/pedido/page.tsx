@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { restaurantService } from "@/services/restaurantService";
 import { orderService } from "@/services/orderService";
 import { subscriptionService } from "@/services/subscriptionService";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cleanWhatsAppPhone } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -131,7 +131,7 @@ export default function CheckoutPage() {
       const order = await orderService.createOrder({
         restaurantId: restaurant.id,
         customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
+        customerPhone: cleanWhatsAppPhone(formData.customerPhone),
         deliveryType: formData.deliveryType,
         deliveryAddress: formData.deliveryType === "DOMICILIO" ? formData.deliveryAddress : undefined,
         deliveryNotes: formData.deliveryNotes || undefined,
