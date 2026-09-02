@@ -321,27 +321,31 @@ export default function DailyMenuPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       
       {/* HEADER TOPBAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md">
-            Armar Menú
-          </span>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+      <div>
+        <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md">
+          Armar Menú
+        </span>
+        <div className="flex flex-wrap items-center gap-3 mt-1">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Platos del Día
           </h1>
-          <p className="text-xs text-slate-500">
-            Agrega los platos que ofrecerás hoy con su nombre, detalles y precio.
-          </p>
+          {restaurant?.slug && (
+            <Link href={`/r/${restaurant.slug}`} target="_blank">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 font-bold h-8 px-2.5 text-xs text-brand-700 bg-brand-50/70 hover:bg-brand-100 border-brand-200 transition-colors shadow-xs"
+              >
+                <Eye className="h-3.5 w-3.5 text-brand-600" />
+                <span>Ver Menú</span>
+              </Button>
+            </Link>
+          )}
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/r/${restaurant?.slug}`} target="_blank">
-            <Button type="button" variant="outline" size="sm" className="gap-1.5 font-bold">
-              <Eye className="h-3.5 w-3.5" />
-              <span>Ver Menú</span>
-            </Button>
-          </Link>
-        </div>
+        <p className="text-xs text-slate-500 mt-1">
+          Agrega los platos que ofrecerás hoy con su nombre, detalles y precio.
+        </p>
       </div>
 
       {feedback && (
@@ -357,12 +361,12 @@ export default function DailyMenuPage() {
       {/* FORM BUILDER */}
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* DATE & TITLE */}
+        {/* DATE & TITLE IN ONE SINGLE LINE */}
         <Card className="border-slate-200 shadow-sm">
-          <CardContent className="p-4 sm:p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                <label className="block text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
                   Título del Menú
                 </label>
                 <input
@@ -370,13 +374,13 @@ export default function DailyMenuPage() {
                   required
                   value={menuTitle}
                   onChange={(e) => setMenuTitle(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 text-slate-900"
+                  className="w-full h-9 sm:h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 text-slate-900"
                   placeholder="Ej: Menú del Día"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                <label className="block text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
                   Fecha
                 </label>
                 <input
@@ -384,7 +388,7 @@ export default function DailyMenuPage() {
                   required
                   value={menuDate}
                   onChange={(e) => setMenuDate(e.target.value)}
-                  className="w-full h-10 px-3.5 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 text-slate-900"
+                  className="w-full h-9 sm:h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 text-slate-900"
                 />
               </div>
             </div>
