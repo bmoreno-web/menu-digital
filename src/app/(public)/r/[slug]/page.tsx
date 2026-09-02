@@ -164,31 +164,7 @@ export default function PublicRestaurantPage() {
         <div className="absolute top-0 right-0 h-48 w-48 bg-brand-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 h-48 w-48 bg-accent-500/10 rounded-full blur-3xl" />
 
-        <div className="max-w-xl mx-auto px-4 pt-6 pb-6 space-y-4 relative z-10">
-          {/* TOP BAR WITH EXIT / CLOSE BUTTON */}
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
-            <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">
-              {restaurant.restaurant_type}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  if (window.history.length > 1) {
-                    window.history.back();
-                  } else {
-                    window.close();
-                  }
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-slate-200 text-xs font-bold backdrop-blur-md border border-white/10 transition-all shadow-xs"
-              title="Cerrar menú y salir"
-            >
-              <X className="h-3.5 w-3.5 text-slate-300" />
-              <span>Cerrar</span>
-            </button>
-          </div>
-
+        <div className="max-w-xl mx-auto px-4 pt-8 pb-6 space-y-4 relative z-10">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">
@@ -205,16 +181,36 @@ export default function PublicRestaurantPage() {
             </div>
           </div>
 
-          {/* Details list */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300 border-t border-white/10 pt-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-brand-400 shrink-0" />
-              <span className="truncate">{restaurant.address} • {restaurant.city}</span>
+          {/* Details list with Close button to the right */}
+          <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+            <div className="space-y-1.5 min-w-0 text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5 text-brand-400 shrink-0" />
+                <span className="truncate">{restaurant.address} • {restaurant.city}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-brand-400 shrink-0" />
+                <span>{restaurant.opening_hours || "Abierto Hoy"}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-brand-400 shrink-0" />
-              <span>{restaurant.opening_hours || "Abierto Hoy"}</span>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  if (window.history.length > 1) {
+                    window.history.back();
+                  } else {
+                    window.close();
+                  }
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-slate-200 text-xs font-bold backdrop-blur-md border border-white/15 transition-all shadow-xs shrink-0"
+              title="Cerrar menú y salir"
+            >
+              <X className="h-3.5 w-3.5 text-slate-300" />
+              <span>Cerrar</span>
+            </button>
           </div>
 
           {/* Action pills (Section 18) */}
