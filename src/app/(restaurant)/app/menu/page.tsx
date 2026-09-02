@@ -652,12 +652,12 @@ export default function DailyMenuPage() {
                         className="w-full h-10 px-3 text-sm font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/10 text-slate-900 placeholder:text-slate-400 placeholder:font-normal"
                       />
 
-                      <input
-                        type="text"
-                        placeholder="Acompañamiento / Detalle (ej: Arroz de coco, ensalada y patacón)"
+                      <textarea
+                        rows={2}
+                        placeholder="Acompañamiento / Detalle (ej: Arroz de coco, ensalada rusa y patacón)"
                         value={item.description}
                         onChange={(e) => handleItemChange(idx, "description", e.target.value)}
-                        className="w-full h-8 px-2.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-600 placeholder:text-slate-400"
+                        className="w-full min-h-[52px] px-2.5 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 focus:bg-white text-slate-700 placeholder:text-slate-400 resize-none leading-relaxed transition-colors"
                       />
                     </div>
                   </div>
