@@ -468,7 +468,7 @@ export default function DailyMenuPage() {
                 {!isActiveToday ? (
                   <div className="bg-slate-200/90 text-slate-700 font-black text-[10px] uppercase tracking-wider px-4 py-1 flex items-center justify-between">
                     <span>⏸️ INACTIVO HOY (Guardado en catálogo, no visible para clientes)</span>
-                    <span className="text-[9px] font-bold text-slate-500">Toca &quot;Ofrecer Hoy&quot; para activarlo</span>
+                    <span className="text-[9px] font-bold text-slate-500">Toca &quot;En Menú Hoy&quot; para activarlo</span>
                   </div>
                 ) : item.is_special ? (
                   <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] uppercase tracking-widest px-4 py-1 flex items-center justify-between shadow-xs">
@@ -528,7 +528,7 @@ export default function DailyMenuPage() {
                         {isActiveToday ? (
                           <>
                             <Check className="h-3 w-3 stroke-[3]" />
-                            <span>Ofrecer Hoy</span>
+                            <span>En Menú Hoy</span>
                           </>
                         ) : (
                           <>
