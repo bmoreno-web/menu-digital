@@ -123,9 +123,13 @@ export const authService = {
   // 2. LOGIN
   async login(email: string, password?: string) {
     const trimmedInput = (email || "").trim().toLowerCase();
-    const normalizedEmail = trimmedInput.includes("@")
-      ? trimmedInput
-      : (trimmedInput === "bmoreno" ? "bmoreno@menu-digital.com" : `${trimmedInput}@menu-digital.com`);
+    let normalizedEmail = trimmedInput;
+    if (!trimmedInput.includes("@")) {
+      if (trimmedInput === "bmoreno") normalizedEmail = "bmoreno@menu-digital.com";
+      else if (trimmedInput === "bmorenochima") normalizedEmail = "bmorenochima@hotmail.com";
+      else if (trimmedInput === "coni") normalizedEmail = "bmorenochima@hotmail.com";
+      else normalizedEmail = `${trimmedInput}@menu-digital.com`;
+    }
 
     if (isMockMode()) {
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -164,10 +168,22 @@ export const authService = {
     }
 
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
+    let { data, error } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password: password || "",
     });
+
+    // If login failed, check if user had previously registered with another alias
+    if (error && normalizedEmail === "bmorenochima@hotmail.com") {
+      const retry = await supabase.auth.signInWithPassword({
+        email: "conitpt0625@gmail.com",
+        password: password || "",
+      });
+      if (!retry.error && retry.data?.user) {
+        data = retry.data;
+        error = null;
+      }
+    }
 
     if (error || !data.user) {
       throw new Error(error?.message || "Credenciales inválidas.");
@@ -194,6 +210,18 @@ export const authService = {
         .eq("id", restaurantUser.restaurant_id)
         .maybeSingle();
       restaurant = restData;
+    }
+
+    // Fallback if not mapped via restaurant_users: look up directly by owner_id
+    if (!restaurant) {
+      const { data: ownerRest } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("owner_id", data.user.id)
+        .maybeSingle();
+      if (ownerRest) {
+        restaurant = ownerRest;
+      }
     }
 
     return { user: profile || data.user, restaurant };
@@ -283,6 +311,18 @@ export const authService = {
           .eq("id", restaurantUser.restaurant_id)
           .maybeSingle();
         restaurant = restData;
+      }
+    }
+
+    // Fallback: search by owner_id directly
+    if (!restaurant && session?.user?.id) {
+      const { data: ownerRest } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("owner_id", session.user.id)
+        .maybeSingle();
+      if (ownerRest) {
+        restaurant = ownerRest;
       }
     }
 

@@ -45,7 +45,18 @@ export default function LoginPage() {
         window.location.href = "/app/dashboard";
       }
     } catch (err: any) {
-      setError(err?.message || "Error al iniciar sesión. Revisa tus credenciales.");
+      const msg = err?.message || "";
+      if (
+        msg.includes("Invalid login credentials") ||
+        msg.includes("invalid_grant") ||
+        msg.includes("Credenciales inválidas")
+      ) {
+        setError("Correo o contraseña incorrectos. Por favor verifica tus credenciales.");
+      } else if (msg.includes("Email not confirmed")) {
+        setError("El correo electrónico aún no ha sido confirmado.");
+      } else {
+        setError(msg || "Error al iniciar sesión. Revisa tus credenciales.");
+      }
       setIsLoading(false);
     }
   };
