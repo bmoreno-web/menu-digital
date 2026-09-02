@@ -70,14 +70,15 @@ export default function RestaurantConfiguration() {
   }, []);
 
   const handleUpgrade = async () => {
-    if (!restaurant) return;
+    if (!restaurant?.id) return;
     setIsUpgrading(true);
     try {
-      await restaurantService.updateRestaurant(restaurant.id, { plan_tier: "pro" });
+      const updated = await restaurantService.updateRestaurant(restaurant.id, { plan_tier: "pro" });
+      setRestaurant(updated);
       await loadData();
       setFeedback("¡Suscripción actualizada a Plan Pro con éxito! El servicio de pedidos se encuentra activo.");
-    } catch (err) {
-      setFeedback("Error al actualizar la suscripción.");
+    } catch (err: any) {
+      setFeedback(err?.message || "Error al actualizar la suscripción.");
     } finally {
       setIsUpgrading(false);
     }
@@ -93,24 +94,56 @@ export default function RestaurantConfiguration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let targetRestaurant = restaurant;
+    if (!targetRestaurant?.id) {
+      const session = await authService.getSession();
+      if (session?.restaurant?.id) {
+        targetRestaurant = session.restaurant;
+        setRestaurant(session.restaurant);
+      }
+    }
+
+    if (!targetRestaurant?.id) {
+      setFeedback("Error: No se encontró un restaurante activo asignado.");
+      return;
+    }
+
     setIsSaving(true);
     setFeedback(null);
 
     try {
-      await restaurantService.updateRestaurant(restaurant.id, {
-        name: restaurant.name,
-        opening_hours: restaurant.opening_hours,
-        address: restaurant.address,
-        phone: restaurant.phone,
-        whatsapp: restaurant.whatsapp,
-        allows_delivery: restaurant.allows_delivery,
-        allows_pickup: restaurant.allows_pickup,
-        delivery_fee: Number(restaurant.delivery_fee) || 0,
-        description: restaurant.description,
+      const updated = await restaurantService.updateRestaurant(targetRestaurant.id, {
+        name: targetRestaurant.name,
+        opening_hours: targetRestaurant.opening_hours,
+        address: targetRestaurant.address,
+        phone: targetRestaurant.phone,
+        whatsapp: targetRestaurant.whatsapp,
+        allows_delivery: targetRestaurant.allows_delivery,
+        allows_pickup: targetRestaurant.allows_pickup,
+        delivery_fee: Number(targetRestaurant.delivery_fee) || 0,
+        description: targetRestaurant.description,
       });
+
+      setRestaurant(updated);
       setFeedback("Configuraciones guardadas con éxito.");
-    } catch (err) {
-      setFeedback("Error al guardar las configuraciones.");
+
+      // If slug exists, refresh QR preview
+      if (updated?.slug) {
+        const publicUrl = `${window.location.origin}/r/${updated.slug}`;
+        const qrDataUrl = await QRCode.toDataURL(publicUrl, {
+          width: 500,
+          margin: 2,
+          color: {
+            dark: "#064e3b",
+            light: "#ffffff",
+          },
+        });
+        setQrUrl(qrDataUrl);
+      }
+    } catch (err: any) {
+      console.error("Error al guardar configuraciones:", err);
+      setFeedback(err?.message || "Error al guardar las configuraciones.");
     } finally {
       setIsSaving(false);
     }

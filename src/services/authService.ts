@@ -247,7 +247,23 @@ export const authService = {
       const override = localStorage.getItem("admin_active_restaurant");
       if (override) {
         try {
-          restaurant = JSON.parse(override);
+          const parsed = JSON.parse(override);
+          if (parsed?.id) {
+            const { data: freshRest } = await supabase
+              .from("restaurants")
+              .select("*")
+              .eq("id", parsed.id)
+              .maybeSingle();
+
+            if (freshRest) {
+              restaurant = freshRest;
+              localStorage.setItem("admin_active_restaurant", JSON.stringify(freshRest));
+            } else {
+              restaurant = parsed;
+            }
+          } else {
+            restaurant = parsed;
+          }
         } catch {}
       }
     }

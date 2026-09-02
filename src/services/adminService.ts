@@ -99,6 +99,17 @@ export const adminService = {
     if (!res.ok || !result.success) {
       throw new Error(result.error || "No se pudo cambiar el estado del restaurante.");
     }
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("admin_active_restaurant");
+      if (active) {
+        try {
+          const parsed = JSON.parse(active);
+          if (parsed.id === restaurantId) {
+            localStorage.setItem("admin_active_restaurant", JSON.stringify({ ...parsed, is_active: isActive }));
+          }
+        } catch {}
+      }
+    }
   },
 
   // Update restaurant plan tier
@@ -122,6 +133,17 @@ export const adminService = {
     const result = await res.json();
     if (!res.ok || !result.success) {
       throw new Error(result.error || "No se pudo actualizar el plan del restaurante.");
+    }
+    if (typeof window !== "undefined") {
+      const active = localStorage.getItem("admin_active_restaurant");
+      if (active) {
+        try {
+          const parsed = JSON.parse(active);
+          if (parsed.id === restaurantId) {
+            localStorage.setItem("admin_active_restaurant", JSON.stringify({ ...parsed, plan_tier: planTier }));
+          }
+        } catch {}
+      }
     }
   },
 
@@ -269,6 +291,19 @@ export const adminService = {
     if (!res.ok || !result.success) {
       throw new Error(result.error || "Error al actualizar el restaurante.");
     }
+
+    if (typeof window !== "undefined" && result.restaurant) {
+      const active = localStorage.getItem("admin_active_restaurant");
+      if (active) {
+        try {
+          const parsed = JSON.parse(active);
+          if (parsed.id === data.id) {
+            localStorage.setItem("admin_active_restaurant", JSON.stringify({ ...parsed, ...result.restaurant }));
+          }
+        } catch {}
+      }
+    }
+
     return result.restaurant;
   },
 

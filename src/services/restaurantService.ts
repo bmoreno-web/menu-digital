@@ -45,18 +45,75 @@ export const restaurantService = {
           localStorage.setItem("mock_session", JSON.stringify(parsed));
         }
       }
+
+      if (typeof window !== "undefined") {
+        const active = localStorage.getItem("admin_active_restaurant");
+        if (active) {
+          try {
+            const parsed = JSON.parse(active);
+            if (parsed.id === id) {
+              localStorage.setItem("admin_active_restaurant", JSON.stringify({ ...parsed, ...mockRestaurants[idx] }));
+            }
+          } catch {}
+        }
+      }
+
       return mockRestaurants[idx];
     }
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("restaurants")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
 
-    if (error) throw error;
-    return data as Restaurant;
+    let updatedRestaurant: Restaurant | null = null;
+
+    // Use server API route first to bypass RLS for Super Admin managing tenant restaurants
+    try {
+      const res = await fetch("/api/restaurant/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...updates }),
+      });
+
+      const result = await res.json();
+      if (res.ok && result.success && result.restaurant) {
+        updatedRestaurant = result.restaurant as Restaurant;
+      } else if (!res.ok) {
+        throw new Error(result?.error || "Error al actualizar perfil del restaurante.");
+      }
+    } catch (apiErr: any) {
+      console.warn("API profile update error, trying fallback to Supabase client:", apiErr);
+      if (apiErr?.message && !apiErr.message.includes("fetch")) {
+        throw apiErr;
+      }
+    }
+
+    if (!updatedRestaurant) {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("restaurants")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      updatedRestaurant = data as Restaurant;
+    }
+
+    // Synchronize admin_active_restaurant in localStorage if Super Admin is managing this restaurant
+    if (typeof window !== "undefined" && updatedRestaurant) {
+      const currentActive = localStorage.getItem("admin_active_restaurant");
+      if (currentActive) {
+        try {
+          const parsed = JSON.parse(currentActive);
+          if (parsed.id === id) {
+            localStorage.setItem(
+              "admin_active_restaurant",
+              JSON.stringify({ ...parsed, ...updatedRestaurant })
+            );
+          }
+        } catch {}
+      }
+    }
+
+    return updatedRestaurant;
   },
 
   // 3. OBTENER CATEGORÍAS DEL MENÚ
