@@ -129,11 +129,11 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
-                label="Correo Electrónico"
+                label="Correo o Usuario"
                 name="email"
-                type="email"
+                type="text"
                 required
-                placeholder="ejemplo@correo.com"
+                placeholder="ej: usuario o correo@ejemplo.com"
                 leftIcon={<Mail className="h-4 w-4" />}
                 value={formData.email}
                 onChange={handleChange}
