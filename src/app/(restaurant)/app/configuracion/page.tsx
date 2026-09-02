@@ -22,6 +22,9 @@ import {
   CheckCircle2,
   Loader2,
   TrendingUp,
+  Lock,
+  Mail,
+  KeyRound,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { subscriptionService } from "@/services/subscriptionService";
@@ -35,6 +38,14 @@ export default function RestaurantConfiguration() {
   const [trialStatus, setTrialStatus] = useState<any>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
 
+  // Security Credentials state
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [securityEmail, setSecurityEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+  const [securityFeedback, setSecurityFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   async function loadData() {
@@ -42,6 +53,8 @@ export default function RestaurantConfiguration() {
       const session = await authService.getSession();
       if (session) {
         setRestaurant(session.restaurant);
+        setCurrentUser(session.user);
+        setSecurityEmail(session.user?.email || "");
         
         const status = await subscriptionService.checkTrialStatus(session.restaurant.id);
         setTrialStatus(status);
@@ -149,6 +162,55 @@ export default function RestaurantConfiguration() {
     }
   };
 
+  const handleSecuritySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSecurityFeedback(null);
+
+    if (!securityEmail || !securityEmail.trim()) {
+      setSecurityFeedback({ type: "error", text: "El correo o usuario no puede estar vacío." });
+      return;
+    }
+
+    if (newPassword && newPassword.length < 6) {
+      setSecurityFeedback({ type: "error", text: "La nueva contraseña debe tener al menos 6 caracteres." });
+      return;
+    }
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setSecurityFeedback({ type: "error", text: "Las contraseñas no coinciden. Por favor verifícalas." });
+      return;
+    }
+
+    const session = await authService.getSession();
+    const targetUserId = currentUser?.id || session?.user?.id;
+    if (!targetUserId) {
+      setSecurityFeedback({ type: "error", text: "Error: No se encontró la sesión activa." });
+      return;
+    }
+
+    setIsUpdatingSecurity(true);
+    try {
+      await authService.updateSecurityCredentials(targetUserId, {
+        email: securityEmail.trim(),
+        password: newPassword ? newPassword.trim() : undefined,
+      });
+
+      setSecurityFeedback({
+        type: "success",
+        text: "¡Credenciales actualizadas con éxito! Ya puedes iniciar sesión con estos datos.",
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      setSecurityFeedback({
+        type: "error",
+        text: err?.message || "Error al actualizar las credenciales de acceso.",
+      });
+    } finally {
+      setIsUpdatingSecurity(false);
+    }
+  };
+
   const handleDownloadQr = () => {
     const link = document.createElement("a");
     link.href = qrUrl;
@@ -240,9 +302,10 @@ export default function RestaurantConfiguration() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* PROFILE AND CONFIGS FORM (Lg: col-7) */}
-        <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
-          <Card className="border-slate-200 shadow-sm">
+        {/* LEFT COLUMN: PROFILE AND SECURITY (Lg: col-7) */}
+        <div className="lg:col-span-7 space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Card className="border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle className="text-sm uppercase tracking-wider text-slate-900">Perfil del Restaurante</CardTitle>
               <CardDescription>Esta información es pública para tus clientes.</CardDescription>
@@ -370,6 +433,85 @@ export default function RestaurantConfiguration() {
             </div>
           </Card>
         </form>
+
+        {/* SECURITY CREDENTIALS */}
+        <Card className="border-slate-200 shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-brand-50 text-brand-700 rounded-lg">
+                  <KeyRound className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm uppercase tracking-wider text-slate-900">
+                    Cuenta de Acceso y Contraseña
+                  </CardTitle>
+                  <CardDescription>
+                    Cambia el correo/usuario con el que inicias sesión y tu contraseña.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {securityFeedback && (
+                <div
+                  className={`p-3.5 rounded-xl text-xs font-bold ${
+                    securityFeedback.type === "success"
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                      : "bg-rose-50 border border-rose-200 text-rose-800"
+                  }`}
+                >
+                  {securityFeedback.text}
+                </div>
+              )}
+
+              <form onSubmit={handleSecuritySubmit} className="space-y-4">
+                <Input
+                  label="Correo o Usuario de Acceso"
+                  name="securityEmail"
+                  type="email"
+                  required
+                  value={securityEmail}
+                  onChange={(e) => setSecurityEmail(e.target.value)}
+                  leftIcon={<Mail className="h-4 w-4" />}
+                  helperText="Este es el correo que usarás para iniciar sesión en el panel."
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Nueva Contraseña (Opcional)"
+                    name="newPassword"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    leftIcon={<Lock className="h-4 w-4" />}
+                  />
+
+                  <Input
+                    label="Confirmar Contraseña"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Repite la contraseña"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    leftIcon={<Lock className="h-4 w-4" />}
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="font-bold px-6"
+                    isLoading={isUpdatingSecurity}
+                  >
+                    Actualizar Credenciales
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* QR GENERATOR AND DOWNLOAD (Lg: col-5) */}
         <div className="lg:col-span-5 space-y-6">

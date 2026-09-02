@@ -352,5 +352,31 @@ export const authService = {
     }
 
     return { user: currentUser, restaurant };
-  }
+  },
+
+  // 5. ACTUALIZAR CREDENCIALES (CORREO Y/O CONTRASEÑA)
+  async updateSecurityCredentials(userId: string, data: { email?: string; password?: string }) {
+    if (isMockMode()) {
+      const mockUsers = JSON.parse(localStorage.getItem("mock_users") || "[]");
+      const idx = mockUsers.findIndex((u: any) => u.id === userId);
+      if (idx !== -1) {
+        if (data.email) mockUsers[idx].email = data.email;
+        if (data.password) mockUsers[idx].password = data.password;
+        localStorage.setItem("mock_users", JSON.stringify(mockUsers));
+      }
+      return { success: true };
+    }
+
+    const res = await fetch("/api/auth/security", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, ...data }),
+    });
+
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result?.error || "No se pudieron actualizar las credenciales.");
+    }
+    return result;
+  },
 };
