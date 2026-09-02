@@ -308,13 +308,13 @@ export default function PublicRestaurantPage() {
                     <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-amber-300/30 to-orange-300/20 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
 
                     <div className="p-4 sm:p-5 relative z-10 space-y-4">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      <div className="flex flex-row items-start gap-3.5 sm:gap-4">
                         {item.image_url ? (
-                          <div className="relative shrink-0 self-center sm:self-auto group-hover:scale-[1.02] transition-transform">
+                          <div className="relative shrink-0 self-start group-hover:scale-[1.02] transition-transform">
                             <img
                               src={item.image_url}
                               alt={item.name}
-                              className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-amber-300/60"
+                              className="h-20 w-20 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-amber-300/60"
                             />
                             <span className="absolute -top-1.5 -left-1.5 h-6 w-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow text-xs">
                               ⭐

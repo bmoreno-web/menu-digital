@@ -490,10 +490,10 @@ export default function DailyMenuPage() {
                 ) : null}
 
                 <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                  <div className="flex flex-row items-start gap-3.5">
                     
                     {/* PHOTO (Max 350x350 WebP) */}
-                    <div className="relative shrink-0 self-center sm:self-auto">
+                    <div className="relative shrink-0 self-start">
                       <input
                         type="file"
                         id={`photo-input-${idx}`}
