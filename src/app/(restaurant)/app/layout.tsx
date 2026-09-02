@@ -23,6 +23,7 @@ import {
   ExternalLink,
   MessageSquare,
   X,
+  Utensils,
 } from "lucide-react";
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
@@ -55,7 +56,7 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
 
   const navItems = [
     { label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
-    { label: "Menú Diario", href: "/app/menu", icon: MenuIcon },
+    { label: "Menú Diario", href: "/app/menu", icon: Utensils },
     { label: "Pedidos", href: "/app/pedidos", icon: ShoppingBag },
     { label: "Clientes", href: "/app/clientes", icon: Users },
     { label: "Estadísticas", href: "/app/estadisticas", icon: BarChart3 },
@@ -189,24 +190,27 @@ export default function RestaurantLayout({ children }: { children: React.ReactNo
         </aside>
 
         {/* MOBILE HEADER */}
-        <header className="md:hidden sticky top-0 z-30 w-full h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 backdrop-blur-md">
+        <header className="md:hidden sticky top-0 z-30 w-full h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-3 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsMobileDrawerOpen(true)}
-              className="p-1.5 -ml-1.5 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
-              aria-label="Abrir menú"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-900 border border-brand-200/80 active:scale-95 transition-all shadow-xs"
+              aria-label="Abrir menú de navegación"
             >
-              <MenuIcon className="h-5 w-5" />
+              <MenuIcon className="h-5 w-5 text-brand-700" />
+              <span className="text-xs font-black">Menú</span>
             </button>
-            <div className="h-8 w-8 rounded-lg bg-brand-600 text-white flex items-center justify-center">
-              <UtensilsCrossed className="h-4 w-4" />
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="h-7 w-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+                <UtensilsCrossed className="h-3.5 w-3.5" />
+              </div>
+              {restaurant && (
+                <span className="font-extrabold text-xs text-slate-900 truncate max-w-[120px]">
+                  {restaurant.name}
+                </span>
+              )}
             </div>
-            {restaurant && (
-              <span className="font-extrabold text-xs text-slate-900 truncate max-w-[150px]">
-                {restaurant.name}
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-2">
