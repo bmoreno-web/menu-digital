@@ -513,11 +513,110 @@ export default function DailyMenuPage() {
                   </div>
                 ) : null}
 
-                <CardContent className="p-4">
-                  <div className="flex flex-row items-start gap-3.5">
-                    
+                <CardContent className="p-3.5 sm:p-4 space-y-3">
+                  {/* TOP ROW: REORDER & STATUS CONTROLS */}
+                  <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100 flex-wrap">
+                    {/* REORDER CONTROLS & NUMBER */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                        #{idx + 1}
+                      </span>
+                      <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50 p-0.5" title="Reordenar plato">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveUp(idx)}
+                          disabled={idx === 0}
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-white disabled:opacity-25 transition-colors"
+                          title="Subir posición"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDown(idx)}
+                          disabled={idx === menuItems.length - 1}
+                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-white disabled:opacity-25 transition-colors"
+                          title="Bajar posición"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* STATUS BUTTONS (TOGGLES) */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* TOGGLE ACTIVE TODAY */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActiveToday(idx)}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all border shadow-xs ${
+                          isActiveToday
+                            ? "bg-emerald-600 border-emerald-700 text-white hover:bg-emerald-700"
+                            : "bg-slate-200 border-slate-300 text-slate-700 hover:bg-slate-300"
+                        }`}
+                        title={isActiveToday ? "Desactivar de hoy" : "Activar para hoy"}
+                      >
+                        {isActiveToday ? (
+                          <>
+                            <Check className="h-3 w-3 stroke-[3]" />
+                            <span>Ofrecer Hoy</span>
+                          </>
+                        ) : (
+                          <>
+                            <X className="h-3 w-3" />
+                            <span>Pausado</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* TOGGLE SPECIAL */}
+                      {isActiveToday && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSpecial(idx)}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all border ${
+                            item.is_special
+                              ? "bg-amber-500 text-white border-amber-600 shadow-xs hover:bg-amber-600"
+                              : "bg-white border-slate-200 text-slate-600 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700"
+                          }`}
+                          title={item.is_special ? "Quitar de Especial" : "Marcar como Especial"}
+                        >
+                          <Star className={`h-3 w-3 ${item.is_special ? "fill-white text-white" : "text-amber-500"}`} />
+                          <span>Especial</span>
+                        </button>
+                      )}
+
+                      {/* AVAILABILITY */}
+                      {isActiveToday && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAvailable(idx, item.id)}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                            item.is_available
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                              : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                          }`}
+                        >
+                          {item.is_available ? "Disponible" : "Agotado"}
+                        </button>
+                      )}
+
+                      {/* DELETE */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(idx)}
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1"
+                        title="Eliminar plato del catálogo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* MAIN ROW: PHOTO + DISH NAME & DESCRIPTION */}
+                  <div className="flex items-start gap-3">
                     {/* PHOTO (Max 350x350 WebP) */}
-                    <div className="relative shrink-0 self-start">
+                    <div className="relative shrink-0">
                       <input
                         type="file"
                         id={`photo-input-${idx}`}
@@ -534,7 +633,7 @@ export default function DailyMenuPage() {
                           <img
                             src={item.image_url}
                             alt={item.name || "Foto del plato"}
-                            className="h-16 w-16 sm:h-18 sm:w-18 rounded-xl object-cover border border-slate-200 shadow-xs"
+                            className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover border border-slate-200 shadow-xs"
                           />
                           <button
                             type="button"
@@ -548,14 +647,14 @@ export default function DailyMenuPage() {
                       ) : (
                         <label
                           htmlFor={`photo-input-${idx}`}
-                          className="h-16 w-16 sm:h-18 sm:w-18 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex flex-col items-center justify-center cursor-pointer transition-all text-slate-400 hover:text-brand-600 group"
-                          title="Subir foto (Optimizada a 350x350 WebP)"
+                          className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl border-2 border-dashed border-slate-200 hover:border-brand-500 hover:bg-brand-50/50 flex flex-col items-center justify-center cursor-pointer transition-all text-slate-400 hover:text-brand-600 group active:scale-95"
+                          title="Subir foto (Optimizada a WebP)"
                         >
                           {uploadingIdx === idx ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
+                            <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
                           ) : (
                             <>
-                              <Camera className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                              <Camera className="h-5 w-5 group-hover:scale-110 transition-transform" />
                               <span className="text-[9px] font-extrabold uppercase mt-1">Foto</span>
                             </>
                           )}
@@ -563,157 +662,57 @@ export default function DailyMenuPage() {
                       )}
                     </div>
 
-                    {/* DISH NAME, DUAL PRICES & DETAILS */}
-                    <div className="flex-1 w-full space-y-2">
+                    {/* DISH NAME & DETAILS */}
+                    <div className="flex-1 min-w-0 space-y-2">
                       <input
                         type="text"
                         placeholder="Nombre del plato (ej: Pechuga a la Plancha)"
                         value={item.name}
                         onChange={(e) => handleItemChange(idx, "name", e.target.value)}
-                        className="w-full h-10 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-900"
+                        className="w-full h-10 px-3 text-sm font-bold bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/10 text-slate-900 placeholder:text-slate-400 placeholder:font-normal"
                       />
-
-                      {/* DUAL PRICES (EN MESA vs PARA LLEVAR) */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                            🍽️ Precio en Mesa ($)
-                          </label>
-                          <input
-                            type="number"
-                            placeholder="En Mesa (ej: 16000)"
-                            value={item.price_dinein !== undefined ? item.price_dinein : item.price}
-                            onChange={(e) => handleItemChange(idx, "price_dinein", Number(e.target.value))}
-                            className="w-full h-9 px-3 text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-800"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
-                            🛵 Precio Para Llevar ($)
-                          </label>
-                          <input
-                            type="number"
-                            placeholder="Para Llevar (ej: 18000)"
-                            value={item.price_takeaway !== undefined ? item.price_takeaway : item.price}
-                            onChange={(e) => {
-                              const val = Number(e.target.value);
-                              handleItemChange(idx, "price_takeaway", val);
-                              handleItemChange(idx, "price", val);
-                            }}
-                            className="w-full h-9 px-3 text-xs font-bold bg-white border border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-600 text-emerald-800 bg-emerald-50/20"
-                          />
-                        </div>
-                      </div>
 
                       <input
                         type="text"
-                        placeholder="Detalles / Acompañamiento (ej: Arroz de coco, ensalada rusa y patacón)"
+                        placeholder="Acompañamiento / Detalle (ej: Arroz de coco, ensalada y patacón)"
                         value={item.description}
                         onChange={(e) => handleItemChange(idx, "description", e.target.value)}
-                        className="w-full h-8.5 px-3 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-600"
+                        className="w-full h-8 px-2.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-600 placeholder:text-slate-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* DUAL PRICES ROW (SIDE BY SIDE ON MOBILE & DESKTOP) */}
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div className="p-2 bg-slate-50/80 border border-slate-200/80 rounded-xl space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 flex items-center gap-1 truncate">
+                        🍽️ En Mesa ($)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="16000"
+                        value={item.price_dinein !== undefined ? item.price_dinein : item.price}
+                        onChange={(e) => handleItemChange(idx, "price_dinein", Number(e.target.value))}
+                        className="w-full h-8 px-2.5 text-xs font-black bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-brand-600 text-slate-900"
                       />
                     </div>
 
-                    {/* ACTIONS: REORDER, OFRECER HOY, ESPECIAL, DISPONIBLE, ELIMINAR */}
-                    <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
-                      
-                      {/* REORDER BUTTONS */}
-                      <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50 p-0.5" title="Reordenar plato">
-                        <button
-                          type="button"
-                          onClick={() => handleMoveUp(idx)}
-                          disabled={idx === 0}
-                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-white disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
-                          title="Subir plato"
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMoveDown(idx)}
-                          disabled={idx === menuItems.length - 1}
-                          className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-white disabled:opacity-25 disabled:hover:bg-transparent transition-colors"
-                          title="Bajar plato"
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      {/* TOGGLE ACTIVE TODAY */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActiveToday(idx)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all border shadow-xs ${
-                          isActiveToday
-                            ? "bg-emerald-600 border-emerald-700 text-white hover:bg-emerald-700"
-                            : "bg-slate-200 border-slate-300 text-slate-700 hover:bg-slate-300"
-                        }`}
-                        title={isActiveToday ? "Desactivar de hoy (Permanecerá en catálogo)" : "Activar para ofrecer hoy"}
-                      >
-                        {isActiveToday ? (
-                          <>
-                            <Check className="h-3.5 w-3.5 stroke-[3]" />
-                            <span>Ofrecer Hoy</span>
-                          </>
-                        ) : (
-                          <>
-                            <X className="h-3.5 w-3.5" />
-                            <span>Pausado Hoy</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* TOGGLE SPECIAL BUTTON */}
-                      {isActiveToday && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleSpecial(idx)}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all border ${
-                            item.is_special
-                              ? "bg-amber-500 text-white border-amber-600 shadow-sm shadow-amber-500/30 hover:bg-amber-600"
-                              : "bg-white border-slate-200 text-slate-600 hover:border-amber-300 hover:bg-amber-50/70 hover:text-amber-700"
-                          }`}
-                          title={item.is_special ? "Quitar de Especial del Día" : "Marcar como Especial del Día"}
-                        >
-                          <Star className={`h-3.5 w-3.5 ${item.is_special ? "fill-white text-white" : "text-amber-500"}`} />
-                          <span>{item.is_special ? "Especial" : "Especial"}</span>
-                        </button>
-                      )}
-
-                      {/* AVAILABILITY BUTTON */}
-                      {isActiveToday && (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAvailable(idx, item.id)}
-                          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                            item.is_available
-                              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                              : "bg-rose-50 text-rose-700 hover:bg-rose-100"
-                          }`}
-                        >
-                          {item.is_available ? (
-                            <>
-                              <CheckCircle className="h-3.5 w-3.5" /> Disponible
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="h-3.5 w-3.5" /> Agotado
-                            </>
-                          )}
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(idx)}
-                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Eliminar plato del catálogo"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                    <div className="p-2 bg-emerald-50/50 border border-emerald-200/80 rounded-xl space-y-1">
+                      <label className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1 truncate">
+                        🛵 Para Llevar ($)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="18000"
+                        value={item.price_takeaway !== undefined ? item.price_takeaway : item.price}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          handleItemChange(idx, "price_takeaway", val);
+                          handleItemChange(idx, "price", val);
+                        }}
+                        className="w-full h-8 px-2.5 text-xs font-black bg-white border border-emerald-300 rounded-lg focus:outline-none focus:border-emerald-600 text-emerald-900"
+                      />
                     </div>
-
                   </div>
                 </CardContent>
               </Card>
