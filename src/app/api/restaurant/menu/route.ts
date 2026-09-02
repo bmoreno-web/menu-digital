@@ -87,19 +87,26 @@ export async function POST(req: NextRequest) {
     // 3. Delete old items for this menu
     await adminSupabase.from("menu_items").delete().eq("menu_id", menuId);
 
-    // 4. Insert new items with image_url, description, and price
+    // 4. Insert new items with image_url, description, price and is_special flag
     const validItems = items.filter((i: any) => i.name && i.name.trim().length > 0);
-    const itemsToInsert = validItems.map((item: any, idx: number) => ({
-      menu_id: menuId,
-      restaurant_id: restaurantId,
-      category_name: item.category_name || "Platos del Día",
-      name: item.name.trim(),
-      description: item.description ? item.description.trim() : "",
-      price: Number(item.price) || 0,
-      image_url: item.image_url || null,
-      is_available: item.is_available !== undefined ? item.is_available : true,
-      display_order: idx,
-    }));
+    const itemsToInsert = validItems.map((item: any, idx: number) => {
+      const rawDesc = item.description ? item.description.trim() : "";
+      const isSpecial = Boolean(item.is_special || rawDesc.startsWith("[ESPECIAL]"));
+      const cleanDesc = rawDesc.replace(/^\[ESPECIAL\]\s*/i, "").trim();
+      const finalDesc = isSpecial ? `[ESPECIAL] ${cleanDesc}`.trim() : cleanDesc;
+
+      return {
+        menu_id: menuId,
+        restaurant_id: restaurantId,
+        category_name: item.category_name || "Platos del Día",
+        name: item.name.trim(),
+        description: finalDesc,
+        price: Number(item.price) || 0,
+        image_url: item.image_url || null,
+        is_available: item.is_available !== undefined ? item.is_available : true,
+        display_order: idx,
+      };
+    });
 
     let insertedItems: any[] = [];
     if (itemsToInsert.length > 0) {
@@ -112,9 +119,21 @@ export async function POST(req: NextRequest) {
       insertedItems = ins || [];
     }
 
+    const formattedItems = insertedItems.map((item: any) => {
+      const isSpecial = Boolean(
+        item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
+      );
+      const cleanDesc = (item.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim();
+      return {
+        ...item,
+        is_special: isSpecial,
+        description: cleanDesc,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      menu: { ...menuData, items: insertedItems },
+      menu: { ...menuData, items: formattedItems },
     });
   } catch (err: any) {
     console.error("API Save Menu Error:", err);

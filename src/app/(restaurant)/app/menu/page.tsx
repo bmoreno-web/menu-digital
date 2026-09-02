@@ -20,6 +20,8 @@ import {
   Calendar,
   Camera,
   X,
+  Sparkles,
+  Star,
 } from "lucide-react";
 
 interface FormItem {
@@ -30,6 +32,7 @@ interface FormItem {
   price: number;
   image_url?: string | null;
   is_available: boolean;
+  is_special?: boolean;
 }
 
 export default function DailyMenuPage() {
@@ -68,10 +71,11 @@ export default function DailyMenuPage() {
                 id: i.id,
                 category_name: i.category_name || "Platos del Día",
                 name: i.name,
-                description: i.description || "",
+                description: (i.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
                 price: Number(i.price),
                 image_url: i.image_url || null,
                 is_available: i.is_available,
+                is_special: Boolean(i.is_special || (i.description && i.description.startsWith("[ESPECIAL]"))),
               }))
             );
           } else {
@@ -84,6 +88,7 @@ export default function DailyMenuPage() {
                 price: 18000,
                 image_url: null,
                 is_available: true,
+                is_special: false,
               },
             ]);
           }
@@ -112,6 +117,7 @@ export default function DailyMenuPage() {
         price: lastPrice,
         image_url: null,
         is_available: true,
+        is_special: false,
       },
     ]);
   };
@@ -127,6 +133,7 @@ export default function DailyMenuPage() {
           price: 18000,
           image_url: null,
           is_available: true,
+          is_special: false,
         },
       ]);
       return;
@@ -169,6 +176,11 @@ export default function DailyMenuPage() {
     handleItemChange(index, "image_url", null);
   };
 
+  const handleToggleSpecial = (index: number) => {
+    const nextVal = !menuItems[index].is_special;
+    handleItemChange(index, "is_special", nextVal);
+  };
+
   const handleCloneMenu = async (pastMenuId: string) => {
     setIsLoading(true);
     setShowHistoryModal(false);
@@ -180,10 +192,11 @@ export default function DailyMenuPage() {
           pastMenu.items.map((i) => ({
             category_name: "Platos del Día",
             name: i.name,
-            description: i.description || "",
+            description: (i.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
             price: Number(i.price),
             image_url: i.image_url || null,
             is_available: true,
+            is_special: Boolean(i.is_special || (i.description && i.description.startsWith("[ESPECIAL]"))),
           }))
         );
         setFeedback("Menú copiado. Haz clic en Guardar para publicarlo hoy.");
@@ -342,15 +355,43 @@ export default function DailyMenuPage() {
 
         {/* LIST OF DISHES */}
         <div className="space-y-3">
+          {menuItems.some((i) => i.is_special) && (
+            <div className="flex items-center gap-2.5 p-3.5 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50/60 border border-amber-200/90 rounded-2xl text-amber-900 text-xs font-bold shadow-xs">
+              <div className="h-6 w-6 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Sparkles className="h-3.5 w-3.5 fill-white" />
+              </div>
+              <p className="leading-tight">
+                <strong className="font-black text-amber-950">
+                  {menuItems.filter((i) => i.is_special).length} plato(s) marcado(s) como Especial del Día.
+                </strong>{" "}
+                <span className="text-amber-800 font-medium">Se destacarán en la parte superior del menú público.</span>
+              </p>
+            </div>
+          )}
+
           {menuItems.map((item, idx) => (
             <Card
               key={idx}
-              className={`border transition-all ${
-                item.is_available
+              className={`border transition-all relative overflow-hidden ${
+                item.is_special
+                  ? "bg-gradient-to-br from-amber-50/60 via-white to-amber-50/20 border-amber-300 ring-2 ring-amber-400/60 shadow-md"
+                  : item.is_available
                   ? "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
                   : "bg-slate-50/70 border-slate-200 opacity-70"
               }`}
             >
+              {item.is_special && (
+                <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-amber-950 font-black text-[10px] uppercase tracking-widest px-4 py-1 flex items-center justify-between shadow-xs">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 fill-amber-950 text-amber-950" />
+                    ⭐ ESPECIAL DEL DÍA DESTACADO
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-900 opacity-90 hidden sm:inline">
+                    Prioridad visual arriba del menú
+                  </span>
+                </div>
+              )}
+
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
                   
@@ -433,8 +474,22 @@ export default function DailyMenuPage() {
                     />
                   </div>
 
-                  {/* AVAILABILITY & DELETE */}
+                  {/* AVAILABILITY, SPECIAL & DELETE */}
                   <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSpecial(idx)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all border ${
+                        item.is_special
+                          ? "bg-amber-500 text-white border-amber-600 shadow-sm shadow-amber-500/30 hover:bg-amber-600"
+                          : "bg-white border-slate-200 text-slate-600 hover:border-amber-300 hover:bg-amber-50/70 hover:text-amber-700"
+                      }`}
+                      title={item.is_special ? "Quitar de Especial del Día" : "Marcar como Especial del Día"}
+                    >
+                      <Star className={`h-3.5 w-3.5 ${item.is_special ? "fill-white text-white" : "text-amber-500"}`} />
+                      <span>{item.is_special ? "Especial" : "Marcar Especial"}</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => handleToggleAvailable(idx, item.id)}

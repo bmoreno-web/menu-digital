@@ -24,6 +24,8 @@ import {
   ChevronRight,
   Loader2,
   HelpCircle,
+  Sparkles,
+  Star,
 } from "lucide-react";
 
 export default function PublicRestaurantPage() {
@@ -95,6 +97,12 @@ export default function PublicRestaurantPage() {
       }
     });
   }
+
+  const specialItems = menu && menu.items
+    ? menu.items.filter((i: any) =>
+        Boolean(i.is_special || (i.description && i.description.startsWith("[ESPECIAL]")))
+      )
+    : [];
 
   const filteredItems = menu && menu.items
     ? menu.items.filter((i: any) => activeCategory === "Todos" || i.category_name === activeCategory)
@@ -231,6 +239,111 @@ export default function PublicRestaurantPage() {
           </div>
         )}
 
+        {/* SPECIAL OF THE DAY FEATURED SECTION */}
+        {menu && specialItems.length > 0 && (
+          <div className="space-y-3 pt-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/30">
+                  <Sparkles className="h-3.5 w-3.5 fill-white" />
+                  Especial del Día
+                </span>
+                <span className="text-xs font-bold text-amber-900 hidden sm:inline">
+                  Recomendado de hoy
+                </span>
+              </div>
+              <span className="text-[11px] font-extrabold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                ⭐ Plato Estrella
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3.5">
+              {specialItems.map((item: any) => {
+                const cleanDescription = (item.description || "")
+                  .replace(/^\[ESPECIAL\]\s*/i, "")
+                  .trim();
+
+                return (
+                  <div
+                    key={`special-${item.id || item.name}`}
+                    className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-50/50 to-orange-50/40 border-2 border-amber-300 shadow-md transition-all hover:shadow-lg hover:border-amber-400 group"
+                  >
+                    {/* Glowing highlight background effect */}
+                    <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-amber-300/30 to-orange-300/20 rounded-full blur-2xl pointer-events-none -mr-10 -mt-10" />
+
+                    <div className="p-4 sm:p-5 relative z-10 space-y-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        {item.image_url ? (
+                          <div className="relative shrink-0 self-center sm:self-auto group-hover:scale-[1.02] transition-transform">
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-2 border-white shadow-md ring-2 ring-amber-300/60"
+                            />
+                            <span className="absolute -top-1.5 -left-1.5 h-6 w-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow text-xs">
+                              ⭐
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center text-amber-800 text-2xl shrink-0 shadow-inner">
+                            ✨
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0 space-y-1.5 text-left">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full">
+                              {item.category_name}
+                            </span>
+                            {!item.is_available && (
+                              <Badge variant="danger" size="sm">
+                                Agotado
+                              </Badge>
+                            )}
+                          </div>
+
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
+                            {item.name}
+                          </h3>
+
+                          {cleanDescription && (
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                              {cleanDescription}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-amber-200/60">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                            Precio
+                          </span>
+                          <span className="text-lg sm:text-xl font-black text-emerald-700">
+                            {formatCurrency(item.price)}
+                          </span>
+                        </div>
+
+                        {item.is_available && (!trialStatus || trialStatus.active) && (
+                          <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => addToCart({ ...item, description: cleanDescription }, 1)}
+                            className="h-10 px-4 rounded-xl font-black gap-1.5 text-xs bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white shadow-md shadow-emerald-600/25 active:scale-95 transition-all"
+                          >
+                            <Plus className="h-4 w-4 stroke-[3]" /> Pedir Especial
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Categories filters */}
         {menu && categories.length > 1 && (
           <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
@@ -256,65 +369,79 @@ export default function PublicRestaurantPage() {
             {filteredItems.length === 0 ? (
               <p className="text-center text-xs text-slate-400 italic py-6">No hay platos en esta categoría hoy.</p>
             ) : (
-              filteredItems.map((item: any) => (
-                <Card
-                  key={item.id}
-                  className={`border-slate-200/80 transition-opacity ${
-                    !item.is_available && "opacity-60 bg-slate-50/50"
-                  }`}
-                >
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex items-start gap-3 min-w-0">
-                        {item.image_url && (
-                          <img
-                            src={item.image_url}
-                            alt={item.name}
-                            className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover border border-slate-100 shrink-0 shadow-xs"
-                          />
-                        )}
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                              {item.category_name}
-                            </span>
-                            {!item.is_available && (
-                              <Badge variant="danger" size="sm">
-                                Agotado
-                              </Badge>
+              filteredItems.map((item: any) => {
+                const isSpecial = Boolean(
+                  item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
+                );
+                const cleanDescription = (item.description || "")
+                  .replace(/^\[ESPECIAL\]\s*/i, "")
+                  .trim();
+
+                return (
+                  <Card
+                    key={item.id || item.name}
+                    className={`border-slate-200/80 transition-opacity ${
+                      !item.is_available && "opacity-60 bg-slate-50/50"
+                    } ${isSpecial ? "border-amber-200 bg-amber-50/10 shadow-xs" : ""}`}
+                  >
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {item.image_url && (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover border border-slate-100 shrink-0 shadow-xs"
+                            />
+                          )}
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                {item.category_name}
+                              </span>
+                              {isSpecial && (
+                                <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                  ⭐ Especial
+                                </span>
+                              )}
+                              {!item.is_available && (
+                                <Badge variant="danger" size="sm">
+                                  Agotado
+                                </Badge>
+                              )}
+                            </div>
+                            <h4 className="text-sm font-extrabold text-slate-950">{item.name}</h4>
+                            {cleanDescription && (
+                              <p className="text-xs text-slate-500 leading-relaxed pt-0.5">{cleanDescription}</p>
                             )}
                           </div>
-                          <h4 className="text-sm font-extrabold text-slate-950">{item.name}</h4>
-                          {item.description && (
-                            <p className="text-xs text-slate-500 leading-relaxed pt-0.5">{item.description}</p>
-                          )}
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-sm font-black text-brand-700">
+                            {formatCurrency(item.price)}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="text-sm font-black text-brand-700">
-                          {formatCurrency(item.price)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Add to cart action (Section 17) */}
-                    {item.is_available && (!trialStatus || trialStatus.active) && (
-                      <div className="flex justify-end pt-1">
-                        <Button
-                          type="button"
-                          variant="primary"
-                          size="sm"
-                          onClick={() => addToCart(item, 1)}
-                          className="h-9 px-3 rounded-lg font-bold gap-1 text-xs"
-                        >
-                          <Plus className="h-3.5 w-3.5" /> Agregar al Pedido
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
+                      {/* Add to cart action (Section 17) */}
+                      {item.is_available && (!trialStatus || trialStatus.active) && (
+                        <div className="flex justify-end pt-1">
+                          <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => addToCart({ ...item, description: cleanDescription }, 1)}
+                            className="h-9 px-3 rounded-lg font-bold gap-1 text-xs"
+                          >
+                            <Plus className="h-3.5 w-3.5" /> Agregar al Pedido
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         )}

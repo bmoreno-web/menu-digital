@@ -126,10 +126,14 @@ CREATE TABLE IF NOT EXISTS public.menu_items (
   price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
   image_url TEXT,
   is_available BOOLEAN NOT NULL DEFAULT true,
+  is_special BOOLEAN NOT NULL DEFAULT false,
   display_order INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Migration helper if updating existing database instance:
+-- ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS is_special BOOLEAN NOT NULL DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS idx_menu_items_menu_id ON public.menu_items(menu_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_restaurant_available ON public.menu_items(restaurant_id, is_available);

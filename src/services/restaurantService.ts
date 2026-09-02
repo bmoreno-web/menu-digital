@@ -219,7 +219,16 @@ export const restaurantService = {
       .order("display_order", { ascending: true });
 
     if (itemsError) throw itemsError;
-    return { ...menu, items: items as MenuItem[] };
+
+    const formattedItems = (items || []).map((item: any) => ({
+      ...item,
+      is_special: Boolean(
+        item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
+      ),
+      description: (item.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
+    }));
+
+    return { ...menu, items: formattedItems as MenuItem[] };
   },
 
   // 6. OBTENER MENÚS (HISTÓRICO)
@@ -293,7 +302,16 @@ export const restaurantService = {
       .order("display_order", { ascending: true });
 
     if (itemsError) throw itemsError;
-    return { ...menu, items: items as MenuItem[] };
+
+    const formattedItems = (items || []).map((item: any) => ({
+      ...item,
+      is_special: Boolean(
+        item.is_special || (item.description && item.description.startsWith("[ESPECIAL]"))
+      ),
+      description: (item.description || "").replace(/^\[ESPECIAL\]\s*/i, "").trim(),
+    }));
+
+    return { ...menu, items: formattedItems as MenuItem[] };
   },
 
   // 9. ACTUALIZAR DISPONIBILIDAD DE UN PLATO (AGOTAR/DISPONIBLE) (Section 17)
