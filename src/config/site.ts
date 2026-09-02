@@ -66,11 +66,13 @@ export const SITE_CONFIG = {
     },
   ],
   restaurantTypes: [
-    { id: "corrientazo", label: "Corrientazo / Almuerzo Casero" },
-    { id: "ejecutivo", label: "Menú Ejecutivo / Gourmet" },
-    { id: "restaurante", label: "Restaurante a la Carta" },
-    { id: "cafeteria", label: "Cafetería / Panadería" },
+    { id: "ejecutivo", label: "Restaurante Ejecutivo" },
+    { id: "corrientazo", label: "Restaurante • Almuerzo Casero" },
+    { id: "cafeteria", label: "Cafetería" },
+    { id: "panaderia", label: "Panadería y Pastelería" },
     { id: "comidas_rapidas", label: "Comidas Rápidas" },
+    { id: "gourmet", label: "Restaurante Gourmet" },
+    { id: "a_la_carta", label: "Restaurante a la Carta" },
     { id: "otro", label: "Otro Tipo de Negocio" },
   ],
   defaultCategories: [

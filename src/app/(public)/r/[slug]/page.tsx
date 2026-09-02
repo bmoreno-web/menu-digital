@@ -96,6 +96,20 @@ export default function PublicRestaurantPage() {
   const isItemSpecial = (item: any) =>
     Boolean(item.is_special || (item.description && item.description.startsWith("[ESPECIAL]")));
 
+  // Helper to format restaurant type elegantly
+  const formatRestaurantType = (type?: string): string => {
+    if (!type) return "Restaurante";
+    const lower = type.toLowerCase().trim();
+    if (lower === "ejecutivo" || lower.includes("ejecutivo")) return "Restaurante Ejecutivo";
+    if (lower === "corrientazo" || lower.includes("casero")) return "Restaurante • Almuerzo Casero";
+    if (lower === "cafeteria" || lower.includes("cafeter")) return "Cafetería";
+    if (lower === "panaderia" || lower.includes("panader")) return "Panadería y Pastelería";
+    if (lower === "comidas_rapidas" || lower.includes("rapidas")) return "Comidas Rápidas";
+    if (lower === "gourmet") return "Restaurante Gourmet";
+    if (lower === "a la carta" || lower === "restaurante") return "Restaurante a la Carta";
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   // Real distinct categories from items
   const itemCategories: string[] = menu && menu.items
     ? Array.from(new Set<string>(menu.items.map((i: any) => (i.category_name as string) || "Platos del Día")))
@@ -167,8 +181,8 @@ export default function PublicRestaurantPage() {
         <div className="max-w-xl mx-auto px-4 pt-8 pb-6 space-y-4 relative z-10">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">
-                {restaurant.restaurant_type}
+              <span className="text-[11px] font-black uppercase tracking-wider text-brand-400">
+                {formatRestaurantType(restaurant.restaurant_type)}
               </span>
               <h1 className="text-2xl font-black tracking-tight leading-tight">
                 {restaurant.name}

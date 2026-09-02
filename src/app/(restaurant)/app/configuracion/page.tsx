@@ -103,7 +103,9 @@ export default function RestaurantConfiguration() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target as any;
     setRestaurant((prev: any) => ({
       ...prev,
@@ -164,6 +166,7 @@ export default function RestaurantConfiguration() {
         delivery_fee: Number(targetRestaurant.delivery_fee) || 0,
         description: targetRestaurant.description,
         logo_url: targetRestaurant.logo_url,
+        restaurant_type: targetRestaurant.restaurant_type || "Restaurante Ejecutivo",
       });
 
       setRestaurant(updated);
@@ -409,6 +412,27 @@ export default function RestaurantConfiguration() {
                 onChange={handleChange}
                 leftIcon={<Store className="h-4 w-4" />}
               />
+
+              <div className="space-y-1.5 text-left">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  Tipo de Establecimiento
+                </label>
+                <select
+                  name="restaurant_type"
+                  value={restaurant.restaurant_type || "Restaurante Ejecutivo"}
+                  onChange={handleChange}
+                  className="w-full p-3.5 text-sm bg-white border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-500/10"
+                >
+                  {SITE_CONFIG.restaurantTypes.map((t) => (
+                    <option key={t.id} value={t.label}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-400">
+                  Este título aparecerá en la parte superior de tu menú público para tus clientes (ej: &quot;Restaurante Ejecutivo&quot;, &quot;Cafetería&quot;).
+                </p>
+              </div>
 
               <div className="space-y-1.5 text-left">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
