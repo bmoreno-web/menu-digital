@@ -28,10 +28,16 @@ import {
   Camera,
   Upload,
   X,
+  Globe,
+  Link as LinkIcon,
+  Sparkles,
+  Eraser,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { subscriptionService } from "@/services/subscriptionService";
+import { orderService } from "@/services/orderService";
 import { optimizeDishImage } from "@/lib/imageOptimizer";
+import { slugify } from "@/lib/utils";
 
 export default function RestaurantConfiguration() {
   const [restaurant, setRestaurant] = useState<any>(null);
@@ -52,6 +58,7 @@ export default function RestaurantConfiguration() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
   const [securityFeedback, setSecurityFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isClearingOrders, setIsClearingOrders] = useState(false);
 
   const printAreaRef = useRef<HTMLDivElement>(null);
 
@@ -201,6 +208,7 @@ export default function RestaurantConfiguration() {
 
       const updated = await restaurantService.updateRestaurant(targetRestaurant.id, {
         name: targetRestaurant.name,
+        slug: targetRestaurant.slug ? slugify(targetRestaurant.slug) : slugify(targetRestaurant.name),
         opening_hours: targetRestaurant.opening_hours,
         address: targetRestaurant.address,
         phone: targetRestaurant.phone,
@@ -283,6 +291,24 @@ export default function RestaurantConfiguration() {
       });
     } finally {
       setIsUpdatingSecurity(false);
+    }
+  };
+
+  const handleClearOrders = async () => {
+    if (!restaurant?.id) return;
+    const confirmClear = window.confirm(
+      `⚠️ ¿Deseas vaciar todos los pedidos de prueba de "${restaurant.name}"?\n\nEsta acción eliminará el historial de pedidos actual para comenzar desde cero.`
+    );
+    if (!confirmClear) return;
+
+    setIsClearingOrders(true);
+    try {
+      await orderService.clearRestaurantOrders(restaurant.id);
+      alert("¡Pedidos de prueba vaciados con éxito!");
+    } catch (err: any) {
+      alert(err?.message || "No se pudieron vaciar los pedidos.");
+    } finally {
+      setIsClearingOrders(false);
     }
   };
 
@@ -456,6 +482,42 @@ export default function RestaurantConfiguration() {
                 onChange={handleChange}
                 leftIcon={<Store className="h-4 w-4" />}
               />
+
+              <div className="space-y-1.5 text-left">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                    Enlace Personalizado del Menú (Slug / URL)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (restaurant.name) {
+                        setRestaurant((prev: any) => ({
+                          ...prev,
+                          slug: slugify(prev.name),
+                        }));
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-700 hover:text-brand-800 hover:underline"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    Actualizar enlace según el nombre
+                  </button>
+                </div>
+                <Input
+                  name="slug"
+                  required
+                  value={restaurant.slug || ""}
+                  onChange={(e) =>
+                    setRestaurant((prev: any) => ({
+                      ...prev,
+                      slug: slugify(e.target.value),
+                    }))
+                  }
+                  leftIcon={<Globe className="h-4 w-4 text-brand-600" />}
+                  helperText={`Enlace público resultante: ${typeof window !== "undefined" ? window.location.origin : ""}/r/${restaurant.slug || ""}`}
+                />
+              </div>
 
               <div className="space-y-2 text-left">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
@@ -681,6 +743,41 @@ export default function RestaurantConfiguration() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* MAINTENANCE / CLEAR TEST DATA CARD */}
+          <Card className="border-rose-100 bg-rose-50/30 shadow-sm">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-rose-100 text-rose-700 rounded-lg">
+                  <Eraser className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm uppercase tracking-wider text-rose-950">
+                    Mantenimiento y Pruebas
+                  </CardTitle>
+                  <CardDescription className="text-rose-700/80">
+                    Limpia los pedidos de prueba de este restaurante antes de lanzar tu menú oficial.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Si realizaste pedidos de prueba para ensayar la plataforma, puedes vaciar el historial de pedidos de este restaurante sin afectar los platos ni el menú.
+              </p>
+              <div className="flex justify-start pt-1">
+                <Button
+                  type="button"
+                  onClick={handleClearOrders}
+                  isLoading={isClearingOrders}
+                  className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold gap-1.5 shadow-xs"
+                >
+                  <Eraser className="h-3.5 w-3.5" />
+                  <span>Vaciar Pedidos de Prueba</span>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

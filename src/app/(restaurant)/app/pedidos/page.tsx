@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Loader2,
   RefreshCw,
+  Eraser,
 } from "lucide-react";
 
 export default function OrdersManagementPage() {
@@ -28,6 +29,7 @@ export default function OrdersManagementPage() {
   const [activeTab, setActiveTab] = useState<string>("TODOS");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   async function loadOrdersData() {
     try {
@@ -55,6 +57,25 @@ export default function OrdersManagementPage() {
   const handleRefresh = () => {
     setIsRefreshing(true);
     loadOrdersData();
+  };
+
+  const handleClearOrders = async () => {
+    if (!restaurant?.id) return;
+    const confirmClear = window.confirm(
+      `⚠️ ¿Deseas vaciar todos los pedidos de prueba de "${restaurant.name}"?\n\nEsta acción eliminará el historial de pedidos actual para que puedas iniciar desde cero.`
+    );
+    if (!confirmClear) return;
+
+    setIsClearing(true);
+    try {
+      await orderService.clearRestaurantOrders(restaurant.id);
+      alert("¡Pedidos de prueba vaciados con éxito!");
+      await loadOrdersData();
+    } catch (err: any) {
+      alert(err?.message || "No se pudieron vaciar los pedidos.");
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const handleUpdateStatus = async (orderId: string, status: any) => {
@@ -133,16 +154,32 @@ export default function OrdersManagementPage() {
           </h1>
         </div>
         
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          className="gap-1.5"
-          isLoading={isRefreshing}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          <span>Actualizar</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {orders.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearOrders}
+              className="gap-1.5 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 font-bold"
+              isLoading={isClearing}
+              title="Vaciar pedidos de prueba de este restaurante"
+            >
+              <Eraser className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Vaciar Pedidos</span>
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="gap-1.5 font-bold"
+            isLoading={isRefreshing}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            <span>Actualizar</span>
+          </Button>
+        </div>
       </div>
 
       {/* FILTER TABS (Section 25) */}

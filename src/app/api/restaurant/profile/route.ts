@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest) {
     // Allowed fields for restaurant profile and settings
     const allowedFields = [
       "name",
+      "slug",
       "description",
       "opening_hours",
       "address",
@@ -58,7 +59,18 @@ export async function PATCH(req: NextRequest) {
 
     for (const key of allowedFields) {
       if (updates[key] !== undefined) {
-        cleanUpdates[key] = updates[key];
+        if (key === "slug" && typeof updates[key] === "string") {
+          cleanUpdates[key] = updates[key]
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w-]+/g, "")
+            .replace(/--+/g, "-");
+        } else {
+          cleanUpdates[key] = updates[key];
+        }
       }
     }
 

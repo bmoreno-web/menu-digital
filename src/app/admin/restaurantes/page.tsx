@@ -27,7 +27,11 @@ import {
   User,
   Clock,
   Check,
+  Globe,
+  Sparkles,
+  Eraser,
 } from "lucide-react";
+import { slugify } from "@/lib/utils";
 
 export default function AdminRestaurantes() {
   const router = useRouter();
@@ -65,6 +69,7 @@ export default function AdminRestaurantes() {
     id: "",
     ownerId: "",
     name: "",
+    slug: "",
     ownerName: "",
     email: "",
     password: "",
@@ -162,6 +167,7 @@ export default function AdminRestaurantes() {
       id: res.id,
       ownerId: res.owner_id || "",
       name: res.name || "",
+      slug: res.slug || "",
       ownerName: res.owner?.full_name || "",
       email: res.owner?.email || "",
       password: "",
@@ -245,6 +251,24 @@ export default function AdminRestaurantes() {
       alert(err?.message || "No se pudieron eliminar los pedidos.");
     } finally {
       setIsClearingOrders(false);
+    }
+  };
+
+  const handleClearRestaurantOrders = async (restaurantId: string, restaurantName: string) => {
+    const confirmClear = window.confirm(
+      `⚠️ ¿Deseas eliminar permanentemente todos los pedidos de prueba del restaurante "${restaurantName}"?\n\nEsta acción no se puede deshacer.`
+    );
+    if (!confirmClear) return;
+
+    setActionLoadingId(restaurantId);
+    try {
+      await adminService.clearOrders(restaurantId);
+      alert(`¡Pedidos de "${restaurantName}" eliminados con éxito!`);
+      await loadRestaurants();
+    } catch (err: any) {
+      alert(err?.message || "No se pudieron eliminar los pedidos.");
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -593,6 +617,15 @@ export default function AdminRestaurantes() {
                       </a>
 
                       <button
+                        onClick={() => handleClearRestaurantOrders(res.id, res.name)}
+                        disabled={actionLoadingId === res.id}
+                        className="inline-flex items-center justify-center p-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                        title="Vaciar Pedidos de Prueba de este Restaurante"
+                      >
+                        <Eraser className="h-3.5 w-3.5" />
+                      </button>
+
+                      <button
                         onClick={() => handleDeleteRestaurant(res.id, res.name)}
                         disabled={actionLoadingId === res.id}
                         className="inline-flex items-center justify-center p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
@@ -752,6 +785,40 @@ export default function AdminRestaurantes() {
             value={editRestaurantForm.name}
             onChange={(e) => setEditRestaurantForm({ ...editRestaurantForm, name: e.target.value })}
           />
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Enlace / Slug del Menú (/r/slug)
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (editRestaurantForm.name) {
+                    setEditRestaurantForm({
+                      ...editRestaurantForm,
+                      slug: slugify(editRestaurantForm.name),
+                    });
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-700 hover:text-brand-800 hover:underline"
+              >
+                <Sparkles className="h-3 w-3" />
+                Actualizar según el nombre
+              </button>
+            </div>
+            <Input
+              value={editRestaurantForm.slug}
+              onChange={(e) =>
+                setEditRestaurantForm({
+                  ...editRestaurantForm,
+                  slug: slugify(e.target.value),
+                })
+              }
+              leftIcon={<Globe className="h-4 w-4 text-brand-600" />}
+              helperText={`Enlace público: /r/${editRestaurantForm.slug || ""}`}
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input

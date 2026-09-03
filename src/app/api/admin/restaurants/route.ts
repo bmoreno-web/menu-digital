@@ -206,19 +206,27 @@ export async function PUT(req: NextRequest) {
     }
 
     // 1. Update restaurant record
+    const restUpdates: any = {
+      name,
+      restaurant_type: restaurantType,
+      phone: phone || whatsapp,
+      whatsapp,
+      city,
+      address,
+      plan_tier: planTier,
+      is_active: isActive !== undefined ? isActive : true,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (body.slug && typeof body.slug === "string") {
+      restUpdates.slug = slugify(body.slug);
+    } else if (name) {
+      restUpdates.slug = slugify(name);
+    }
+
     const { data: updatedRest, error: restError } = await adminSupabase
       .from("restaurants")
-      .update({
-        name,
-        restaurant_type: restaurantType,
-        phone: phone || whatsapp,
-        whatsapp,
-        city,
-        address,
-        plan_tier: planTier,
-        is_active: isActive !== undefined ? isActive : true,
-        updated_at: new Date().toISOString(),
-      })
+      .update(restUpdates)
       .eq("id", id)
       .select()
       .single();

@@ -236,6 +236,7 @@ export const adminService = {
     id: string;
     ownerId?: string;
     name: string;
+    slug?: string;
     ownerName: string;
     email: string;
     password?: string;

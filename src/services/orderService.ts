@@ -206,5 +206,22 @@ export const orderService = {
 
     if (error) throw error;
     return data as Customer[];
+  },
+
+  // 6. VACIAR PEDIDOS DE UN RESTAURANTE
+  async clearRestaurantOrders(restaurantId: string): Promise<void> {
+    if (isMockMode()) {
+      const mockOrders = JSON.parse(localStorage.getItem("mock_orders") || "[]");
+      const remaining = mockOrders.filter((o: any) => o.restaurant_id !== restaurantId);
+      localStorage.setItem("mock_orders", JSON.stringify(remaining));
+      return;
+    }
+    const res = await fetch(`/api/admin/orders?restaurantId=${encodeURIComponent(restaurantId)}`, {
+      method: "DELETE",
+    });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || "No se pudieron eliminar los pedidos.");
+    }
   }
 };
