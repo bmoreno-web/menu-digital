@@ -36,7 +36,6 @@ export default function MarketingLandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // Demo Interactive State
   const [demoOrderMode, setDemoOrderMode] = useState<"LLEVAR" | "MESA">("LLEVAR");
-  const [demoActiveCategory, setDemoActiveCategory] = useState("Todos");
   const [demoShowCartDrawer, setDemoShowCartDrawer] = useState(false);
   const [demoOrderSuccess, setDemoOrderSuccess] = useState(false);
 
@@ -170,10 +169,6 @@ export default function MarketingLandingPage() {
     const price = demoOrderMode === "MESA" ? i.priceMesa : i.priceLlevar;
     return acc + price * i.qty;
   }, 0);
-
-  const filteredDemoItems = demoMenuItems.filter(
-    (item) => demoActiveCategory === "Todos" || item.category === demoActiveCategory
-  );
 
   const faqs = [
     {
@@ -586,90 +581,64 @@ export default function MarketingLandingPage() {
                       </button>
                     </div>
 
-                    {/* Category Filter Pills */}
-                    <div className="flex gap-1.5 overflow-x-auto py-1 no-scrollbar">
-                      {["Todos", "Proteína", "Sopa", "Bebida", "Acompañamiento"].map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setDemoActiveCategory(cat)}
-                          className={`text-[10px] px-2.5 py-1 rounded-full font-bold transition-all shrink-0 border ${
-                            demoActiveCategory === cat
-                              ? "bg-slate-900 border-slate-900 text-white shadow-xs"
-                              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* FEATURED: ⭐ ESPECIAL DEL DÍA (Filtered by active category) */}
-                    {(demoActiveCategory === "Todos" || demoActiveCategory === demoSpecialItem.category) && (
-                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-50/70 to-orange-50/50 border-2 border-amber-300 shadow-sm p-3 space-y-2.5 animate-in fade-in duration-200">
-                        <div className="flex items-start gap-2.5">
-                          <div className="relative shrink-0">
-                            <img
-                              src={demoSpecialItem.imageUrl}
-                              alt={demoSpecialItem.name}
-                              className="h-16 w-16 rounded-xl object-cover border border-amber-300 shadow-xs"
-                            />
-                            <span className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow">
-                              ⭐
-                            </span>
-                          </div>
-
-                          <div className="flex-1 min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-1">
-                              <span className="text-[9px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
-                                ⭐ Especial del Día
-                              </span>
-                            </div>
-                            <h5 className="text-xs font-black text-slate-900 leading-snug">
-                              {demoSpecialItem.name}
-                            </h5>
-                            <p className="text-[10px] text-slate-600 line-clamp-2 leading-tight">
-                              {demoSpecialItem.desc}
-                            </p>
-                          </div>
+                    {/* FEATURED: ⭐ ESPECIAL DEL DÍA */}
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-50/70 to-orange-50/50 border-2 border-amber-300 shadow-sm p-3 space-y-2.5">
+                      <div className="flex items-start gap-2.5">
+                        <div className="relative shrink-0">
+                          <img
+                            src={demoSpecialItem.imageUrl}
+                            alt={demoSpecialItem.name}
+                            className="h-16 w-16 rounded-xl object-cover border border-amber-300 shadow-xs"
+                          />
+                          <span className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow">
+                            ⭐
+                          </span>
                         </div>
 
-                        <div className="flex items-center justify-between pt-1.5 border-t border-amber-200/60">
-                          <div>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase block">
-                              {demoOrderMode === "MESA" ? "Precio en Mesa" : "Precio Para Llevar"}
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                              ⭐ Especial del Día
                             </span>
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-sm font-black text-emerald-700">
-                                {formatCurrency(demoOrderMode === "MESA" ? demoSpecialItem.priceMesa : demoSpecialItem.priceLlevar)}
-                              </span>
-                              <span className="text-[9px] font-semibold text-slate-400">
-                                ({demoOrderMode === "MESA" ? "Llevar: " : "Mesa: "}
-                                {formatCurrency(demoOrderMode === "MESA" ? demoSpecialItem.priceLlevar : demoSpecialItem.priceMesa)})
-                              </span>
-                            </div>
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDemoAddToCart(demoSpecialItem)}
-                            className="text-[11px] bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white px-3 py-1.5 rounded-lg font-black shadow-sm active:scale-95 transition-all flex items-center gap-1"
-                          >
-                            <Plus className="h-3.5 w-3.5" /> Pedir Especial
-                          </button>
+                          <h5 className="text-xs font-black text-slate-900 leading-snug">
+                            {demoSpecialItem.name}
+                          </h5>
+                          <p className="text-[10px] text-slate-600 line-clamp-2 leading-tight">
+                            {demoSpecialItem.desc}
+                          </p>
                         </div>
                       </div>
-                    )}
+
+                      <div className="flex items-center justify-between pt-1.5 border-t border-amber-200/60">
+                        <div>
+                          <span className="text-[9px] font-bold text-slate-500 uppercase block">
+                            {demoOrderMode === "MESA" ? "Precio en Mesa" : "Precio Para Llevar"}
+                          </span>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-sm font-black text-emerald-700">
+                              {formatCurrency(demoOrderMode === "MESA" ? demoSpecialItem.priceMesa : demoSpecialItem.priceLlevar)}
+                            </span>
+                            <span className="text-[9px] font-semibold text-slate-400">
+                              ({demoOrderMode === "MESA" ? "Llevar: " : "Mesa: "}
+                              {formatCurrency(demoOrderMode === "MESA" ? demoSpecialItem.priceLlevar : demoSpecialItem.priceMesa)})
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDemoAddToCart(demoSpecialItem)}
+                          className="text-[11px] bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white px-3 py-1.5 rounded-lg font-black shadow-sm active:scale-95 transition-all flex items-center gap-1"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Pedir Especial
+                        </button>
+                      </div>
+                    </div>
 
                     {/* Regular Menu Items List */}
                     <div className="space-y-2">
-                      {filteredDemoItems.length === 0 && demoActiveCategory !== "Todos" && demoActiveCategory !== demoSpecialItem.category && (
-                        <div className="text-center py-6 bg-white rounded-xl border border-slate-200 p-4 space-y-1 text-slate-500 text-xs">
-                          <p className="font-bold">No hay más platos en esta categoría</p>
-                          <p className="text-[10px] text-slate-400">Selecciona otra categoría o pulsa &apos;Todos&apos;.</p>
-                        </div>
-                      )}
-                      {filteredDemoItems.map((item) => {
+                      {demoMenuItems.map((item) => {
                         const activePrice = demoOrderMode === "MESA" ? item.priceMesa : item.priceLlevar;
                         const otherPrice = demoOrderMode === "MESA" ? item.priceLlevar : item.priceMesa;
 

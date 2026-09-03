@@ -36,7 +36,6 @@ export default function PublicRestaurantPage() {
 
   const [restaurant, setRestaurant] = useState<any>(null);
   const [menu, setMenu] = useState<any>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [trialStatus, setTrialStatus] = useState<any>(null);
@@ -112,28 +111,13 @@ export default function PublicRestaurantPage() {
     return type.trim();
   };
 
-  // Real distinct categories from items
-  const itemCategories: string[] = menu && menu.items
-    ? Array.from(new Set<string>(menu.items.map((i: any) => (i.category_name as string) || "Platos del Día")))
-    : [];
-  const showCategoryFilters = itemCategories.length > 1;
-  const categories: string[] = showCategoryFilters ? ["Todos", ...itemCategories] : [];
-
   const specialItems = menu && menu.items
-    ? menu.items.filter(
-        (i: any) =>
-          isItemSpecial(i) &&
-          (!showCategoryFilters || activeCategory === "Todos" || i.category_name === activeCategory)
-      )
+    ? menu.items.filter((i: any) => isItemSpecial(i))
     : [];
 
   // Exclude special items from repeating below because they are already featured at the top
   const filteredItems = menu && menu.items
-    ? menu.items.filter(
-        (i: any) =>
-          !isItemSpecial(i) &&
-          (!showCategoryFilters || activeCategory === "Todos" || i.category_name === activeCategory)
-      )
+    ? menu.items.filter((i: any) => !isItemSpecial(i))
     : [];
 
   const cartCount = cart.reduce((acc, c) => acc + c.quantity, 0);
@@ -329,26 +313,6 @@ export default function PublicRestaurantPage() {
           </div>
         )}
 
-        {/* Categories filters - only shown if there are 2 or more distinct categories */}
-        {menu && showCategoryFilters && (
-          <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setActiveCategory(cat)}
-                className={`text-xs px-4 py-2 rounded-full font-bold transition-all shrink-0 border ${
-                  activeCategory === cat
-                    ? "bg-brand-600 border-brand-600 text-white shadow-sm"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* SPECIAL OF THE DAY FEATURED SECTION */}
         {menu && specialItems.length > 0 && (
           <div className="space-y-3 pt-1">
@@ -459,12 +423,8 @@ export default function PublicRestaurantPage() {
         {/* Menu items list (Section 18) - Displays dishes that are not featured as specials */}
         {menu && (
           <div className="space-y-3">
-            {filteredItems.length === 0 ? (
-              specialItems.length === 0 ? (
-                <p className="text-center text-xs text-slate-400 italic py-6">No hay platos disponibles en este momento.</p>
-              ) : activeCategory !== "Todos" ? (
-                <p className="text-center text-xs text-slate-400 italic py-6">No hay otros platos en esta categoría hoy.</p>
-              ) : null
+            {filteredItems.length === 0 && specialItems.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 italic py-6">No hay platos disponibles en este momento.</p>
             ) : (
               filteredItems.map((item: any) => {
                 const isSpecial = Boolean(
