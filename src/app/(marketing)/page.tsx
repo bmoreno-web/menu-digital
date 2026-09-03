@@ -25,64 +25,151 @@ import {
   ChevronRight,
   Menu as MenuIcon,
   X,
+  Star,
+  Plus,
+  Minus,
+  MapPin,
 } from "lucide-react";
 
 export default function MarketingLandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [demoActiveCategory, setDemoActiveCategory] = useState("Proteína");
-  const [demoOrderCount, setDemoOrderCount] = useState(2);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Demo Interactive State
+  const [demoOrderMode, setDemoOrderMode] = useState<"LLEVAR" | "MESA">("LLEVAR");
+  const [demoActiveCategory, setDemoActiveCategory] = useState("Todos");
+  const [demoShowCartDrawer, setDemoShowCartDrawer] = useState(false);
+  const [demoOrderSuccess, setDemoOrderSuccess] = useState(false);
+
+  // Demo Menu Items
+  const demoSpecialItem = {
+    id: "demo-special-1",
+    name: "Bandeja Paisa con Chicharrón Crocante",
+    desc: "Frijoles caseros, chicharrón carnudo, carne molida, huevo frito, arroz, tajada y aguacate fresco.",
+    priceLlevar: 24000,
+    priceMesa: 22000,
+    category: "Proteína",
+    imageUrl: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&auto=format&fit=crop&q=80",
+    isSpecial: true,
+    available: true,
+  };
 
   const demoMenuItems = [
     {
-      category: "Sopa",
-      name: "Sancocho Trifásico de Costilla",
-      desc: "Con mazorca tierna, plátano verde y toque de cilantro fresco.",
-      price: 18000,
-      available: true,
-      tag: "Tradicional",
-    },
-    {
+      id: "demo-1",
       category: "Proteína",
       name: "Pechuga a la Plancha en Salsa Criolla",
       desc: "Acompañada de arroz de coco, ensalada de aguacate y tajadas de plátano maduro.",
-      price: 18000,
+      priceLlevar: 18000,
+      priceMesa: 17000,
+      imageUrl: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&auto=format&fit=crop&q=80",
       available: true,
       tag: "Más Pedido",
     },
     {
+      id: "demo-2",
+      category: "Sopa",
+      name: "Sancocho Trifásico de Costilla",
+      desc: "Con mazorca tierna, plátano verde, yuca y toque de cilantro fresco.",
+      priceLlevar: 17000,
+      priceMesa: 16000,
+      imageUrl: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&auto=format&fit=crop&q=80",
+      available: true,
+      tag: "Tradicional",
+    },
+    {
+      id: "demo-3",
       category: "Proteína",
-      name: "Carne Desmechada en Jugo de Tomate",
-      desc: "Cocción lenta de 4 horas con especias naturales de la casa.",
-      price: 19000,
+      name: "Carne Desmechada en Jugo Casero",
+      desc: "Cocción lenta con especias naturales de la casa, arroz y patacón con hogao.",
+      priceLlevar: 19000,
+      priceMesa: 18000,
+      imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80",
       available: true,
       tag: "Recomendado",
     },
     {
+      id: "demo-4",
       category: "Proteína",
       name: "Sierra Frita con Patacón",
       desc: "Pescado fresco del día con limón mandarino y patacones crocantes.",
-      price: 22000,
+      priceLlevar: 22000,
+      priceMesa: 20000,
       available: false, // Demo out of stock item
       tag: "Agotado",
     },
     {
-      category: "Acompañamiento",
-      name: "Porción de Arroz Blanco + Frijol",
-      desc: "Guiso casero con tocino crocante.",
-      price: 4500,
-      available: true,
-      tag: "Extra",
-    },
-    {
+      id: "demo-5",
       category: "Bebida",
       name: "Jugo Natural de Corozo Frío",
-      desc: "100% fruta natural bien helado (14oz).",
-      price: 4000,
+      desc: "100% pulpa natural bien helada en vaso de 14oz.",
+      priceLlevar: 4500,
+      priceMesa: 4000,
+      imageUrl: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=400&auto=format&fit=crop&q=80",
       available: true,
       tag: "Bebida del Día",
     },
+    {
+      id: "demo-6",
+      category: "Acompañamiento",
+      name: "Porción de Patacones con Hogao",
+      desc: "4 patacones crocantes con hogao tradicional de tomate y cebolla.",
+      priceLlevar: 5000,
+      priceMesa: 4500,
+      available: true,
+      tag: "Extra",
+    },
   ];
+
+  // Demo Cart state initialized with 1 special and 1 beverage
+  const [demoCart, setDemoCart] = useState<Array<{ id: string; name: string; priceLlevar: number; priceMesa: number; qty: number }>>([
+    {
+      id: "demo-special-1",
+      name: "Bandeja Paisa con Chicharrón",
+      priceLlevar: 24000,
+      priceMesa: 22000,
+      qty: 1,
+    },
+    {
+      id: "demo-5",
+      name: "Jugo Natural de Corozo",
+      priceLlevar: 4500,
+      priceMesa: 4000,
+      qty: 1,
+    },
+  ]);
+
+  const handleDemoAddToCart = (item: { id: string; name: string; priceLlevar: number; priceMesa: number }) => {
+    setDemoCart((prev) => {
+      const idx = prev.findIndex((i) => i.id === item.id);
+      if (idx !== -1) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], qty: next[idx].qty + 1 };
+        return next;
+      }
+      return [...prev, { ...item, qty: 1 }];
+    });
+    setDemoOrderSuccess(false);
+  };
+
+  const handleDemoUpdateQty = (id: string, delta: number) => {
+    setDemoCart((prev) => {
+      return prev
+        .map((i) => {
+          if (i.id === id) {
+            const newQty = i.qty + delta;
+            return newQty > 0 ? { ...i, qty: newQty } : null;
+          }
+          return i;
+        })
+        .filter(Boolean) as typeof prev;
+    });
+  };
+
+  const demoTotalItems = demoCart.reduce((acc, i) => acc + i.qty, 0);
+  const demoSubtotal = demoCart.reduce((acc, i) => {
+    const price = demoOrderMode === "MESA" ? i.priceMesa : i.priceLlevar;
+    return acc + price * i.qty;
+  }, 0);
 
   const filteredDemoItems = demoMenuItems.filter(
     (item) => demoActiveCategory === "Todos" || item.category === demoActiveCategory
@@ -343,82 +430,173 @@ export default function MarketingLandingPage() {
       </section>
 
       {/* DEMO INTERACTIVO EN VIVO */}
-      <section id="demo-en-vivo" className="py-16 md:py-24 bg-slate-900 text-white overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <section id="demo-en-vivo" className="py-16 md:py-24 bg-slate-900 text-white overflow-hidden relative">
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-10 w-96 h-96 bg-brand-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            <div className="lg:col-span-5 space-y-5">
-              <Badge variant="accent">Vista Previa Interactiva</Badge>
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
-                Así de fácil lo ven tus comensales
+            {/* LEFT COLUMN: FEATURES & HIGHLIGHTS */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/20 text-accent-300 text-xs font-black tracking-wider uppercase border border-accent-500/30">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Vista Previa Interactiva</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                La experiencia que tus clientes van a amar
               </h2>
+
               <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                Sin registros ni complicaciones. Tus clientes eligen su comida favorita, agregan acompañamientos y envían su pedido en menos de 60 segundos.
+                Prueba el demo interactivo en el celular: cambia entre <strong>Para Llevar</strong> y <strong>En Mesa</strong>, pide el <strong>Especial del Día</strong> o agrega platos al carrito.
               </p>
 
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="space-y-3.5 pt-1">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
-                  <span>Diseño optimizado para cualquier smartphone</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Precios Duales (Llevar vs Mesa)</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                      Configura tarifas diferenciadas con 1 clic. El menú recalcula los totales automáticamente.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="h-4 w-4" />
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                  <div className="h-8 w-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Star className="h-4 w-4" />
                   </div>
-                  <span>Actualización inmediata de platos agotados</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Especial del Día Destacado</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                      Resalta tu mejor plato con tarjeta dorada para impulsar tus ventas diarias.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-slate-200">
-                  <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="h-4 w-4" />
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+                  <div className="h-8 w-8 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Zap className="h-4 w-4" />
                   </div>
-                  <span>Resumen claro con total y dirección de entrega</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Carrito Rápido & Sin Registro</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                      Tus clientes piden en menos de 60 segundos directo a tu WhatsApp o comanda interna.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4">
-                <Link href={SITE_CONFIG.urls.register}>
-                  <Button variant="accent" size="lg" className="gap-2">
-                    Crear Menú Para Mi Negocio <ArrowRight className="h-4 w-4" />
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <Link href={SITE_CONFIG.urls.register} className="w-full sm:w-auto">
+                  <Button variant="accent" size="lg" className="w-full sm:w-auto gap-2 font-bold shadow-lg shadow-accent-500/20">
+                    Crear Menú Para Mi Restaurante <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* MOCKUP INTERACTIVO SMARTPHONE */}
+            {/* RIGHT COLUMN: INTERACTIVE SMARTPHONE MOCKUP */}
             <div className="lg:col-span-7 flex justify-center">
-              <div className="w-full max-w-sm bg-slate-950 rounded-[2.5rem] p-3 shadow-2xl border-4 border-slate-800 relative">
-                {/* Speaker pill */}
-                <div className="absolute top-5 left-1/2 -translate-x-1/2 h-4 w-28 bg-slate-800 rounded-full z-20" />
+              <div className="w-full max-w-[380px] bg-slate-950 rounded-[2.8rem] p-3 shadow-2xl border-4 border-slate-800 relative ring-1 ring-white/10">
+                {/* Dynamic Island / Speaker Pill */}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 h-5 w-28 bg-slate-900 rounded-full z-30 flex items-center justify-center border border-slate-800">
+                  <div className="h-2 w-2 rounded-full bg-slate-950 mr-2" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-blue-950/80 border border-blue-900/50" />
+                </div>
 
-                <div className="bg-slate-50 text-slate-900 rounded-[2rem] overflow-hidden pt-7 pb-4 px-4 min-h-[580px] flex flex-col justify-between">
-                  {/* Restaurant Public Header */}
-                  <div>
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-                      <div>
-                        <span className="text-[10px] font-bold text-brand-700 uppercase tracking-wider">
-                          Menú de Hoy
-                        </span>
-                        <h4 className="text-base font-extrabold text-slate-900">
-                          Restaurante El Buen Sabor
-                        </h4>
-                        <p className="text-[11px] text-slate-500">Calle 72 # 44-20 • Abierto</p>
+                {/* Smartphone Screen Canvas */}
+                <div className="bg-slate-50 text-slate-900 rounded-[2.3rem] overflow-hidden pt-7 pb-4 px-3 min-h-[620px] max-h-[620px] flex flex-col justify-between relative select-none">
+                  
+                  {/* SCROLLABLE INNER MENU CONTENT */}
+                  <div className="overflow-y-auto no-scrollbar space-y-3 pb-16">
+                    
+                    {/* Header: Restaurant Profile (Dark slate modern) */}
+                    <div className="bg-slate-900 text-white rounded-2xl p-3.5 space-y-2.5 shadow-md relative overflow-hidden">
+                      <div className="absolute top-0 right-0 h-24 w-24 bg-brand-500/15 rounded-full blur-xl" />
+                      
+                      <div className="flex items-start justify-between gap-2 relative z-10">
+                        <div className="space-y-0.5 min-w-0">
+                          <span className="text-[9px] font-black uppercase tracking-wider text-brand-400 block">
+                            Restaurante • Almuerzo Casero
+                          </span>
+                          <h4 className="text-sm font-black tracking-tight text-white leading-tight">
+                            Restaurante El Buen Sabor
+                          </h4>
+                          <p className="text-[10px] text-slate-300 line-clamp-1">
+                            Sazón tradicional y platos frescos del día
+                          </p>
+                        </div>
+                        <div className="h-10 w-10 rounded-xl bg-brand-600 flex items-center justify-center font-black text-xs text-white shadow-md shrink-0">
+                          EBS
+                        </div>
                       </div>
-                      <div className="h-10 w-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-sm">
-                        EBS
+
+                      <div className="flex items-center justify-between gap-1 text-[10px] text-slate-300 border-t border-white/10 pt-2 relative z-10">
+                        <span className="truncate">📍 Calle 72 # 44-20 • Barranquilla</span>
+                        <span className="text-emerald-400 font-bold shrink-0">● Abierto</span>
+                      </div>
+
+                      {/* Quick action buttons */}
+                      <div className="grid grid-cols-2 gap-1.5 pt-0.5 relative z-10">
+                        <button
+                          type="button"
+                          onClick={() => alert("Simulación: Abre chat directo con el restaurante por WhatsApp.")}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <MessageSquare className="h-3 w-3" /> WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => alert("Simulación: Abre ubicación del restaurante en Google Maps.")}
+                          className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-1.5 px-2 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <MapPin className="h-3 w-3" /> Cómo Llegar
+                        </button>
                       </div>
                     </div>
 
+                    {/* INTERACTIVE MODE SELECTOR (LLEVAR vs MESA) */}
+                    <div className="bg-white p-1 rounded-xl border border-slate-200 shadow-xs flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setDemoOrderMode("LLEVAR")}
+                        className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all flex items-center justify-center gap-1 ${
+                          demoOrderMode === "LLEVAR"
+                            ? "bg-emerald-600 text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        <span>🛵 Para Llevar / Domicilio</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDemoOrderMode("MESA")}
+                        className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black transition-all flex items-center justify-center gap-1 ${
+                          demoOrderMode === "MESA"
+                            ? "bg-brand-600 text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        <span>🍽️ Comer en Mesa</span>
+                      </button>
+                    </div>
+
                     {/* Category Filter Pills */}
-                    <div className="flex gap-1.5 overflow-x-auto py-2.5 no-scrollbar">
-                      {["Todos", "Sopa", "Proteína", "Acompañamiento", "Bebida"].map((cat) => (
+                    <div className="flex gap-1.5 overflow-x-auto py-1 no-scrollbar">
+                      {["Todos", "Proteína", "Sopa", "Bebida", "Acompañamiento"].map((cat) => (
                         <button
                           key={cat}
+                          type="button"
                           onClick={() => setDemoActiveCategory(cat)}
-                          className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors shrink-0 ${
+                          className={`text-[10px] px-2.5 py-1 rounded-full font-bold transition-all shrink-0 border ${
                             demoActiveCategory === cat
-                              ? "bg-slate-900 text-white"
-                              : "bg-slate-200/80 text-slate-700 hover:bg-slate-300"
+                              ? "bg-slate-900 border-slate-900 text-white shadow-xs"
+                              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
                           }`}
                         >
                           {cat}
@@ -426,77 +604,282 @@ export default function MarketingLandingPage() {
                       ))}
                     </div>
 
-                    {/* Menu Items List */}
-                    <div className="space-y-2 mt-1 max-h-[300px] overflow-y-auto pr-1">
-                      {filteredDemoItems.map((item, idx) => (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-xl border transition-all ${
-                            item.available
-                              ? "bg-white border-slate-200/80 shadow-sm"
-                              : "bg-slate-100 border-slate-200 opacity-60"
-                          }`}
-                        >
-                          <div className="flex justify-between items-start gap-2">
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-slate-900">
-                                  {item.name}
+                    {/* FEATURED: ⭐ ESPECIAL DEL DÍA (Filtered by active category) */}
+                    {(demoActiveCategory === "Todos" || demoActiveCategory === demoSpecialItem.category) && (
+                      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-50/70 to-orange-50/50 border-2 border-amber-300 shadow-sm p-3 space-y-2.5 animate-in fade-in duration-200">
+                        <div className="flex items-start gap-2.5">
+                          <div className="relative shrink-0">
+                            <img
+                              src={demoSpecialItem.imageUrl}
+                              alt={demoSpecialItem.name}
+                              className="h-16 w-16 rounded-xl object-cover border border-amber-300 shadow-xs"
+                            />
+                            <span className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shadow">
+                              ⭐
+                            </span>
+                          </div>
+
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5">
+                                ⭐ Especial del Día
+                              </span>
+                            </div>
+                            <h5 className="text-xs font-black text-slate-900 leading-snug">
+                              {demoSpecialItem.name}
+                            </h5>
+                            <p className="text-[10px] text-slate-600 line-clamp-2 leading-tight">
+                              {demoSpecialItem.desc}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1.5 border-t border-amber-200/60">
+                          <div>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase block">
+                              {demoOrderMode === "MESA" ? "Precio en Mesa" : "Precio Para Llevar"}
+                            </span>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-sm font-black text-emerald-700">
+                                {formatCurrency(demoOrderMode === "MESA" ? demoSpecialItem.priceMesa : demoSpecialItem.priceLlevar)}
+                              </span>
+                              <span className="text-[9px] font-semibold text-slate-400">
+                                ({demoOrderMode === "MESA" ? "Llevar: " : "Mesa: "}
+                                {formatCurrency(demoOrderMode === "MESA" ? demoSpecialItem.priceLlevar : demoSpecialItem.priceMesa)})
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDemoAddToCart(demoSpecialItem)}
+                            className="text-[11px] bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white px-3 py-1.5 rounded-lg font-black shadow-sm active:scale-95 transition-all flex items-center gap-1"
+                          >
+                            <Plus className="h-3.5 w-3.5" /> Pedir Especial
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Regular Menu Items List */}
+                    <div className="space-y-2">
+                      {filteredDemoItems.length === 0 && demoActiveCategory !== "Todos" && demoActiveCategory !== demoSpecialItem.category && (
+                        <div className="text-center py-6 bg-white rounded-xl border border-slate-200 p-4 space-y-1 text-slate-500 text-xs">
+                          <p className="font-bold">No hay más platos en esta categoría</p>
+                          <p className="text-[10px] text-slate-400">Selecciona otra categoría o pulsa &apos;Todos&apos;.</p>
+                        </div>
+                      )}
+                      {filteredDemoItems.map((item) => {
+                        const activePrice = demoOrderMode === "MESA" ? item.priceMesa : item.priceLlevar;
+                        const otherPrice = demoOrderMode === "MESA" ? item.priceLlevar : item.priceMesa;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className={`p-2.5 rounded-xl border transition-all ${
+                              item.available
+                                ? "bg-white border-slate-200/80 shadow-xs"
+                                : "bg-slate-100/80 border-slate-200 opacity-60"
+                            }`}
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="flex items-start gap-2 min-w-0">
+                                {item.imageUrl && (
+                                  <img
+                                    src={item.imageUrl}
+                                    alt={item.name}
+                                    className="h-12 w-12 rounded-lg object-cover border border-slate-100 shrink-0"
+                                  />
+                                )}
+                                <div className="space-y-0.5 min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase">
+                                      {item.category}
+                                    </span>
+                                    {item.tag && item.available && (
+                                      <span className="text-[8px] font-extrabold text-brand-700 bg-brand-50 px-1.5 py-0.2 rounded-full">
+                                        {item.tag}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h6 className="text-[11px] font-extrabold text-slate-950 leading-tight">
+                                    {item.name}
+                                  </h6>
+                                  <p className="text-[9px] text-slate-500 line-clamp-1 leading-tight">
+                                    {item.desc}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <span className="text-[11px] font-black text-brand-700 block">
+                                  {formatCurrency(activePrice)}
+                                </span>
+                                <span className="text-[8px] font-semibold text-slate-400 block">
+                                  {demoOrderMode === "MESA" ? "Llevar: " : "Mesa: "}
+                                  {formatCurrency(otherPrice)}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">
-                                {item.desc}
-                              </p>
                             </div>
-                            <div className="text-right shrink-0">
-                              <span className="text-xs font-black text-brand-700">
-                                {formatCurrency(item.price)}
-                              </span>
+
+                            <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between">
+                              {item.available ? (
+                                <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                                  ● Disponible
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded-full">
+                                  ✕ AGOTADO
+                                </span>
+                              )}
+
+                              {item.available && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDemoAddToCart(item)}
+                                  className="text-[10px] bg-brand-600 hover:bg-brand-700 active:scale-95 text-white px-2.5 py-1 rounded-md font-bold shadow-xs transition-all flex items-center gap-0.5"
+                                >
+                                  <Plus className="h-3 w-3" /> Agregar
+                                </button>
+                              )}
                             </div>
                           </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                          <div className="mt-2 flex items-center justify-between">
-                            {item.available ? (
-                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                                ● Disponible
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
-                                ✕ AGOTADO
-                              </span>
-                            )}
+                  {/* FLOATING CUSTOMER STICKY CART BAR (matches Section 20) */}
+                  {demoTotalItems > 0 && (
+                    <div className="absolute bottom-3 left-3 right-3 z-20">
+                      <button
+                        type="button"
+                        onClick={() => setDemoShowCartDrawer(true)}
+                        className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold h-12 rounded-xl flex items-center justify-between px-3.5 shadow-xl transition-all active:scale-[0.98] select-none border border-brand-500/50 animate-in fade-in slide-in-from-bottom-2 duration-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-white/20 flex items-center justify-center text-white font-black text-xs">
+                            {demoTotalItems}
+                          </div>
+                          <div className="text-left">
+                            <span className="text-[11px] font-black block leading-none">
+                              {demoOrderMode === "MESA" ? "🍽️ Pedido en Mesa" : "🛵 Mi Pedido"}
+                            </span>
+                            <span className="text-[9px] text-brand-100 font-semibold">
+                              Total: {formatCurrency(demoSubtotal)}
+                            </span>
+                          </div>
+                        </div>
 
-                            {item.available && (
-                              <button
-                                onClick={() => setDemoOrderCount((c) => c + 1)}
-                                className="text-xs bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded-lg font-bold shadow-xs active:scale-95 transition-all"
+                        <span className="text-[10px] font-black flex items-center gap-0.5 uppercase tracking-wider bg-white/15 px-2 py-1 rounded-lg">
+                          Ver Carrito <ChevronRight className="h-3.5 w-3.5" />
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* IN-MOCKUP CART DRAWER MODAL (Real customer checkout preview) */}
+                  {demoShowCartDrawer && (
+                    <div className="absolute inset-0 z-40 flex flex-col justify-end bg-slate-950/60 backdrop-blur-xs rounded-[2.3rem] overflow-hidden animate-in fade-in duration-150">
+                      <div className="bg-white rounded-t-2xl shadow-2xl border-t border-slate-200 max-h-[82%] flex flex-col justify-between overflow-hidden animate-in slide-in-from-bottom duration-200">
+                        {/* Drawer Header */}
+                        <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                          <div className="flex items-center gap-1.5">
+                            <ShoppingBag className="h-4 w-4 text-brand-600" />
+                            <h6 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                              Detalle del Pedido
+                            </h6>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDemoShowCartDrawer(false)}
+                            className="text-[10px] font-bold text-slate-500 hover:text-slate-800 bg-slate-200/70 px-2 py-1 rounded-md"
+                          >
+                            Cerrar
+                          </button>
+                        </div>
+
+                        {/* Order Mode Pill in Cart */}
+                        <div className="px-3 pt-2">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                            demoOrderMode === "MESA"
+                              ? "bg-brand-50 text-brand-700 border border-brand-200"
+                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          }`}>
+                            {demoOrderMode === "MESA" ? "🍽️ Modo: Comer en Mesa" : "🛵 Modo: Para Llevar / Domicilio"}
+                          </span>
+                        </div>
+
+                        {/* Items List */}
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[220px]">
+                          {demoCart.map((cartItem) => {
+                            const itemPrice = demoOrderMode === "MESA" ? cartItem.priceMesa : cartItem.priceLlevar;
+                            return (
+                              <div
+                                key={cartItem.id}
+                                className="p-2 bg-slate-50 border border-slate-200/80 rounded-lg flex items-center justify-between gap-2"
                               >
-                                + Agregar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                                <div className="min-w-0">
+                                  <span className="text-[11px] font-bold text-slate-900 block truncate">
+                                    {cartItem.name}
+                                  </span>
+                                  <span className="text-[9px] text-brand-700 font-bold block">
+                                    {formatCurrency(itemPrice)} c/u
+                                  </span>
+                                </div>
 
-                  {/* Customer Sticky Cart Bar */}
-                  <div className="mt-3 p-3 bg-brand-700 rounded-2xl text-white flex items-center justify-between shadow-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
-                        <ShoppingBag className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold">{demoOrderCount} Platos añadidos</div>
-                        <div className="text-[10px] text-brand-100">
-                          Total: {formatCurrency(demoOrderCount * 18000)}
+                                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-md p-0.5 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDemoUpdateQty(cartItem.id, -1)}
+                                    className="p-1 hover:bg-slate-100 rounded text-slate-500"
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </button>
+                                  <span className="text-[10px] font-bold w-4 text-center">
+                                    {cartItem.qty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDemoUpdateQty(cartItem.id, 1)}
+                                    className="p-1 hover:bg-slate-100 rounded text-slate-500"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Drawer Footer & Checkout Action */}
+                        <div className="p-3 bg-slate-50 border-t border-slate-100 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-900">
+                            <span>Subtotal platos:</span>
+                            <span className="text-xs font-black text-brand-700">
+                              {formatCurrency(demoSubtotal)}
+                            </span>
+                          </div>
+
+                          {demoOrderSuccess ? (
+                            <div className="p-2 bg-emerald-500 text-white rounded-xl text-center space-y-0.5 animate-in zoom-in-95">
+                              <span className="text-[10px] font-black block">🎉 ¡Pedido Enviado con Éxito!</span>
+                              <p className="text-[8px] opacity-90">Llega directo a la comanda del restaurante.</p>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setDemoOrderSuccess(true)}
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-md active:scale-95 transition-all"
+                            >
+                              <MessageSquare className="h-3.5 w-3.5" /> Enviar Pedido por WhatsApp
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <button className="bg-white text-brand-800 text-xs font-extrabold px-3 py-1.5 rounded-xl hover:bg-brand-50 transition-colors">
-                      Pedir Ahora
-                    </button>
-                  </div>
+                  )}
+
                 </div>
               </div>
             </div>

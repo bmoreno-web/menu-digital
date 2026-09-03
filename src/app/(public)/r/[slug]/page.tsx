@@ -120,7 +120,11 @@ export default function PublicRestaurantPage() {
   const categories: string[] = showCategoryFilters ? ["Todos", ...itemCategories] : [];
 
   const specialItems = menu && menu.items
-    ? menu.items.filter((i: any) => isItemSpecial(i))
+    ? menu.items.filter(
+        (i: any) =>
+          isItemSpecial(i) &&
+          (!showCategoryFilters || activeCategory === "Todos" || i.category_name === activeCategory)
+      )
     : [];
 
   // Exclude special items from repeating below because they are already featured at the top
@@ -325,6 +329,26 @@ export default function PublicRestaurantPage() {
           </div>
         )}
 
+        {/* Categories filters - only shown if there are 2 or more distinct categories */}
+        {menu && showCategoryFilters && (
+          <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                className={`text-xs px-4 py-2 rounded-full font-bold transition-all shrink-0 border ${
+                  activeCategory === cat
+                    ? "bg-brand-600 border-brand-600 text-white shadow-sm"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* SPECIAL OF THE DAY FEATURED SECTION */}
         {menu && specialItems.length > 0 && (
           <div className="space-y-3 pt-1">
@@ -429,25 +453,6 @@ export default function PublicRestaurantPage() {
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* Categories filters - only shown if there are 2 or more distinct categories */}
-        {menu && showCategoryFilters && (
-          <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`text-xs px-4 py-2 rounded-full font-bold transition-all shrink-0 border ${
-                  activeCategory === cat
-                    ? "bg-brand-600 border-brand-600 text-white shadow-sm"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         )}
 
